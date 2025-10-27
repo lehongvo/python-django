@@ -195,7 +195,7 @@ def checkout(request):
             }]
         except Product.DoesNotExist:
             messages.error(request, 'Product not found')
-            return redirect('product_list')
+            return redirect('store:product_list')
     else:
         # Get cart from localStorage (for now, show message to add products)
         messages.info(request, 'Your cart is empty. Add some products first!')
@@ -293,6 +293,56 @@ def account(request):
         'orders': orders,
     }
     return render(request, 'store/account.html', context)
+
+
+def account_settings(request):
+    """User account settings page"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to access settings.')
+        return redirect('store:user_login')
+    
+    user = request.user
+    
+    # Get or create customer
+    customer, created = Customer.objects.get_or_create(
+        email=user.email,
+        defaults={
+            'name': user.get_full_name() or user.username,
+            'phone': '',
+            'address': '',
+            'city': '',
+            'state': '',
+            'postal_code': '',
+            'country': 'USA',
+        }
+    )
+    
+    if request.method == 'POST':
+        # Update user info
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        user.save()
+        
+        # Update customer info
+        customer.name = f"{user.first_name} {user.last_name}".strip() or user.username
+        customer.email = user.email
+        customer.phone = request.POST.get('phone', '')
+        customer.address = request.POST.get('address', '')
+        customer.city = request.POST.get('city', '')
+        customer.state = request.POST.get('state', '')
+        customer.postal_code = request.POST.get('postal_code', '')
+        customer.country = request.POST.get('country', 'USA')
+        customer.save()
+        
+        messages.success(request, 'Settings updated successfully!')
+        return redirect('store:account_settings')
+    
+    context = {
+        'user': user,
+        'customer': customer,
+    }
+    return render(request, 'store/account_settings.html', context)
 
 
 def cart(request):
