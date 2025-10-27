@@ -418,3 +418,5 @@ products = Product.objects.prefetch_related(
 - **Aggregate data**: Use annotate() and aggregate()
 - **Debug queries**: Print query to see SQL
 
+
+

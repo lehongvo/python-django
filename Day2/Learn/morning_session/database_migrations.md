@@ -354,3 +354,5 @@ python manage.py sqlmigrate ecommerce 0002
 - Always test migrations
 - Commit migration files to version control
 
+
+

@@ -14,7 +14,7 @@
 
 ## Basic Concepts
 
-### Model = Table
+## Model = Table
 
 ```python
 from django.db import models
@@ -23,12 +23,13 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
-    
+  
     def __str__(self):
         return self.name
 ```
 
 **Becomes**:
+
 ```sql
 CREATE TABLE ecommerce_product (
     id SERIAL PRIMARY KEY,
@@ -83,7 +84,7 @@ class Book(models.Model):
     published_date = models.DateField()
     isbn = models.CharField(max_length=13, unique=True)
     price = models.DecimalField(max_digits=6, decimal_places=2)
-    
+  
     class Meta:
         db_table = 'books'
         ordering = ['-published_date']
@@ -96,19 +97,19 @@ class MyModel(models.Model):
     # Text Fields
     name = models.CharField(max_length=100)
     description = models.TextField()
-    
+  
     # Numbers
     quantity = models.IntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     rating = models.FloatField()
-    
+  
     # Boolean
     is_active = models.BooleanField(default=True)
-    
+  
     # Date/Time
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+  
     # Choice Fields
     STATUS_CHOICES = [
         ('draft', 'Draft'),
@@ -116,13 +117,13 @@ class MyModel(models.Model):
         ('archived', 'Archived'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    
+  
     # Slug
     slug = models.SlugField(unique=True)
-    
+  
     # File Upload
     image = models.ImageField(upload_to='images/')
-    
+  
     # URLs
     website = models.URLField()
 ```
@@ -135,26 +136,26 @@ class MyModel(models.Model):
 class Product(models.Model):
     # Required field
     name = models.CharField(max_length=200)
-    
+  
     # Optional field
     description = models.TextField(blank=True, null=True)
-    
+  
     # Default value
     is_active = models.BooleanField(default=True)
-    
+  
     # Unique constraint
     sku = models.CharField(max_length=50, unique=True)
-    
+  
     # Database column name
     published = models.BooleanField(db_column='is_published')
-    
+  
     # Help text (for admin)
     price = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
         help_text="Price in USD"
     )
-    
+  
     # Validators
     email = models.EmailField(validators=[validate_email])
 ```
@@ -266,18 +267,18 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_percent = models.IntegerField(default=0)
-    
+  
     def __str__(self):
         return self.name
-    
+  
     def get_discounted_price(self):
         """Calculate price after discount"""
         return self.price * (1 - self.discount_percent / 100)
-    
+  
     def is_on_sale(self):
         """Check if product is on sale"""
         return self.discount_percent > 0
-    
+  
     def save(self, *args, **kwargs):
         """Override save method"""
         # Do something before saving
@@ -295,4 +296,3 @@ class Product(models.Model):
 - **__str__** = Human-readable representation
 - **Meta** = Model metadata and options
 - **Methods** = Add business logic to models
-

@@ -1,0 +1,327 @@
+{% extends 'store/base.html' %}
+
+{% block title %}TechStore 2025 - Premium E-commerce Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section flex items-center justify-center text-white relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
+        <div class="animate-float">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                Welcome to the
+                <span class="text-gradient">Future</span>
+                <br>of Shopping
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 text-gray-200 max-w-3xl mx-auto">
+                Experience cutting-edge technology with our premium e-commerce platform. 
+                Discover, explore, and shop with confidence in 2025.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'store:product_list' %}" class="btn-modern text-lg px-8 py-4">
+                    <i class="fas fa-rocket mr-2"></i>Explore Products
+                </a>
+                <a href="{% url 'store:category_list' %}" class="glass-effect text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:bg-opacity-20 transition-all">
+                    <i class="fas fa-th-large mr-2"></i>Browse Categories
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Elements -->
+    <div class="absolute top-20 left-10 animate-pulse-slow">
+        <div class="w-20 h-20 bg-white bg-opacity-10 rounded-full"></div>
+    </div>
+    <div class="absolute bottom-20 right-10 animate-pulse-slow" style="animation-delay: 1s;">
+        <div class="w-16 h-16 bg-white bg-opacity-10 rounded-full"></div>
+    </div>
+    <div class="absolute top-1/2 right-20 animate-pulse-slow" style="animation-delay: 2s;">
+        <div class="w-12 h-12 bg-white bg-opacity-10 rounded-full"></div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="stats-card">
+                <div class="text-4xl font-bold text-indigo-600 mb-2">{{ featured_products|length }}+</div>
+                <div class="text-gray-600 font-medium">Featured Products</div>
+            </div>
+            <div class="stats-card">
+                <div class="text-4xl font-bold text-purple-600 mb-2">{{ categories|length }}+</div>
+                <div class="text-gray-600 font-medium">Categories</div>
+            </div>
+            <div class="stats-card">
+                <div class="text-4xl font-bold text-green-600 mb-2">24/7</div>
+                <div class="text-gray-600 font-medium">Customer Support</div>
+            </div>
+            <div class="stats-card">
+                <div class="text-4xl font-bold text-orange-600 mb-2">2025</div>
+                <div class="text-gray-600 font-medium">Modern Platform</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+{% if featured_products %}
+<section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4 section-title">
+                <i class="fas fa-star text-yellow-500 mr-3"></i>Featured Products
+            </h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                Discover our handpicked selection of premium products, carefully curated for the modern lifestyle.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for product in featured_products %}
+            <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden group">
+                <!-- Product Image Placeholder -->
+                <div class="relative h-64 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                    <div class="text-center">
+                        <i class="fas fa-image text-6xl text-indigo-300 mb-4"></i>
+                        <p class="text-indigo-500 font-medium">Product Image</p>
+                    </div>
+                    
+                    <!-- Discount Badge -->
+                    {% if product.discount_percent > 0 %}
+                    <div class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        {{ product.discount_percent }}% OFF
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Quick Actions -->
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div class="flex space-x-2">
+                            <button class="bg-white text-gray-900 px-4 py-2 rounded-full font-medium hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-eye mr-2"></i>Quick View
+                            </button>
+                            <button class="bg-indigo-600 text-white px-4 py-2 rounded-full font-medium hover:bg-indigo-700 transition-colors">
+                                <i class="fas fa-heart mr-2"></i>Wishlist
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Info -->
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-indigo-600 font-semibold">{{ product.category.name }}</span>
+                        <div class="flex space-x-1">
+                            {% for tag in product.tags.all %}
+                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                        {{ product.name }}
+                    </h3>
+                    
+                    <p class="text-gray-600 mb-4 line-clamp-2">
+                        {{ product.short_description|truncatewords:15 }}
+                    </p>
+                    
+                    <!-- Price -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl font-bold text-gray-900">${{ product.price }}</span>
+                            {% if product.compare_price %}
+                            <span class="text-lg text-gray-500 line-through">${{ product.compare_price }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-gray-300"></i>
+                            <span class="text-sm text-gray-500 ml-1">(4.0)</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Stock Status -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            {% if product.is_in_stock %}
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            <span class="text-green-600 font-medium">In Stock</span>
+                            {% else %}
+                            <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                            <span class="text-red-600 font-medium">Out of Stock</span>
+                            {% endif %}
+                        </div>
+                        <span class="text-sm text-gray-500">{{ product.stock }} available</span>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex space-x-2">
+                        <a href="{% url 'store:product_detail' product.slug %}" 
+                           class="flex-1 bg-indigo-600 text-white text-center py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-eye mr-2"></i>View Details
+                        </a>
+                        {% if product.is_in_stock %}
+                        <button class="bg-green-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                        {% else %}
+                        <button class="bg-gray-400 text-white px-4 py-3 rounded-xl font-semibold cursor-not-allowed" disabled>
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-12">
+            <a href="{% url 'store:product_list' %}" class="btn-modern text-lg px-8 py-4">
+                <i class="fas fa-arrow-right mr-2"></i>View All Products
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Categories Section -->
+{% if categories %}
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4 section-title">
+                <i class="fas fa-th-large text-indigo-500 mr-3"></i>Shop by Category
+            </h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                Explore our diverse range of categories, each offering unique products tailored to your needs.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for category in categories %}
+            <div class="group cursor-pointer">
+                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 text-center hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                    <div class="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-{{ category.name|lower|slice:':1' }} text-white text-2xl"></i>
+                    </div>
+                    
+                    <h3 class="text-2xl font-bold text-gray-900 mb-3">{{ category.name }}</h3>
+                    <p class="text-gray-600 mb-6">{{ category.description|truncatewords:15 }}</p>
+                    
+                    <div class="flex items-center justify-center space-x-4 mb-6">
+                        <span class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-semibold">
+                            {{ category.product_set.count }} products
+                        </span>
+                        <span class="text-gray-500 text-sm">
+                            <i class="fas fa-clock mr-1"></i>Updated daily
+                        </span>
+                    </div>
+                    
+                    <a href="{% url 'store:product_list' %}?category={{ category.slug }}" 
+                       class="inline-flex items-center text-indigo-600 font-semibold hover:text-indigo-700 transition-colors">
+                        Browse {{ category.name }}
+                        <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Features Section -->
+<section class="py-20 bg-gray-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold mb-4">
+                Why Choose TechStore 2025?
+            </h2>
+            <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                Experience the next generation of e-commerce with our cutting-edge platform.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-rocket text-white text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Lightning Fast</h3>
+                <p class="text-gray-300">
+                    Experience blazing-fast page loads and instant responses with our optimized platform.
+                </p>
+            </div>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Secure & Safe</h3>
+                <p class="text-gray-300">
+                    Your data and transactions are protected with enterprise-grade security measures.
+                </p>
+            </div>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-headset text-white text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">24/7 Support</h3>
+                <p class="text-gray-300">
+                    Get help whenever you need it with our round-the-clock customer support team.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="py-20 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-4xl font-bold mb-4">Stay Updated</h2>
+        <p class="text-xl mb-8 text-indigo-100">
+            Get the latest updates on new products, exclusive deals, and platform improvements.
+        </p>
+        
+        <div class="max-w-md mx-auto">
+            <div class="flex">
+                <input type="email" placeholder="Enter your email address" 
+                       class="flex-1 px-4 py-3 rounded-l-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-white">
+                <button class="bg-white text-indigo-600 px-6 py-3 rounded-r-xl font-semibold hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-paper-plane mr-2"></i>Subscribe
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}

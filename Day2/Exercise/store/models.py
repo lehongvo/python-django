@@ -105,7 +105,11 @@ class Product(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.sku:
-            self.sku = f"PROD-{self.id or 'NEW'}"
+            # Generate unique SKU based on name and timestamp
+            import time
+            timestamp = int(time.time())
+            name_part = self.name.replace(' ', '').upper()[:8]
+            self.sku = f"{name_part}-{timestamp}"
         super().save(*args, **kwargs)
 
 

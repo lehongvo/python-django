@@ -1,0 +1,186 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}My Account - TechStore 2025{% endblock %}
+
+{% block content %}
+{% if not user %}
+{% include 'store/account_login.html' %}
+{% else %}
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-user-circle text-indigo-600 mr-3"></i>
+                My Account
+            </h1>
+            <p class="text-gray-600">Manage your profile, orders, and settings</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Profile Card -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                    <div class="text-center">
+                        <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user text-white text-4xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">{{ user.get_full_name|default:user.username }}</h3>
+                        <p class="text-gray-600">{{ user.email }}</p>
+                        {% if customer %}
+                        <div class="mt-4 text-sm text-gray-600">
+                            <i class="fas fa-phone mr-2"></i>{{ customer.phone|default:"No phone" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <a href="{% url 'store:account_orders' %}" class="flex items-center justify-between py-2 text-gray-700 hover:text-indigo-600 transition-colors">
+                            <span><i class="fas fa-shopping-bag mr-2"></i>My Orders</span>
+                            <i class="fas fa-chevron-right text-sm"></i>
+                        </a>
+                        <a href="{% url 'store:account_settings' %}" class="flex items-center justify-between py-2 text-gray-700 hover:text-indigo-600 transition-colors">
+                            <span><i class="fas fa-cog mr-2"></i>Settings</span>
+                            <i class="fas fa-chevron-right text-sm"></i>
+                        </a>
+                        <a href="{% url 'store:account_addresses' %}" class="flex items-center justify-between py-2 text-gray-700 hover:text-indigo-600 transition-colors">
+                            <span><i class="fas fa-map-marker-alt mr-2"></i>Addresses</span>
+                            <i class="fas fa-chevron-right text-sm"></i>
+                        </a>
+                        <button onclick="logout()" class="w-full flex items-center justify-between py-2 text-red-600 hover:text-red-700 transition-colors">
+                            <span><i class="fas fa-sign-out-alt mr-2"></i>Logout</span>
+                            <i class="fas fa-chevron-right text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-2">
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-600 mb-1">Total Orders</div>
+                                <div class="text-3xl font-bold text-gray-900">{{ orders|length }}</div>
+                            </div>
+                            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-shopping-bag text-indigo-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-600 mb-1">Pending Orders</div>
+                                <div class="text-3xl font-bold text-yellow-600">
+                                    {% for order in orders %}{% if order.status == 'processing' %}1{% endif %}{% empty %}0{% endfor %}
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-clock text-yellow-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-600 mb-1">Account Status</div>
+                                <div class="text-3xl font-bold text-green-600">Active</div>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check-circle text-green-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="bg-white rounded-2xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                        <i class="fas fa-receipt text-indigo-600 mr-3"></i>
+                        Recent Orders
+                    </h2>
+                    
+                    {% if orders %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Order</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                    <th class="text-right py-3 px-4 font-semibold text-gray-700">Total</th>
+                                    <th class="text-center py-3 px-4 font-semibold text-gray-700">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-4 px-4">
+                                        <div class="font-semibold text-gray-900">#{{ order.order_number }}</div>
+                                        <div class="text-sm text-gray-600">{{ order.items.count }} items</div>
+                                    </td>
+                                    <td class="py-4 px-4 text-gray-700">{{ order.order_date|date:"M d, Y" }}</td>
+                                    <td class="py-4 px-4">
+                                        {% if order.status == 'delivered' %}
+                                            <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                                <i class="fas fa-check-circle mr-2"></i>Delivered
+                                            </span>
+                                        {% elif order.status == 'shipped' %}
+                                            <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                                <i class="fas fa-shipping-fast mr-2"></i>Shipped
+                                            </span>
+                                        {% elif order.status == 'processing' %}
+                                            <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                                <i class="fas fa-clock mr-2"></i>Processing
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                                {{ order.status|title }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-4 px-4 text-right font-semibold text-indigo-600">${{ order.total_amount }}</td>
+                                    <td class="py-4 px-4 text-center">
+                                        <a href="{% url 'store:order_tracking' %}?order_number={{ order.order_number }}" 
+                                           class="text-indigo-600 hover:text-indigo-700">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="fas fa-receipt text-6xl mb-4"></i>
+                        <p class="text-lg mb-4">No orders yet</p>
+                        <a href="{% url 'store:product_list' %}" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-shopping-bag mr-2"></i>
+                            Start Shopping
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        window.location.href = "{% url 'store:logout' %}";
+    }
+}
+</script>
+{% endblock %}
+

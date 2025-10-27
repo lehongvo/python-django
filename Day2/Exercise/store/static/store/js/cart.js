@@ -1,0 +1,215 @@
+// Cart functionality for TechStore 2025
+
+// Shopping Cart (stored in localStorage)
+const Cart = {
+    get: () => {
+        const cart = localStorage.getItem('cart');
+        return cart ? JSON.parse(cart) : [];
+    },
+    
+    add: (productId, quantity = 1) => {
+        const cart = Cart.get();
+        const existingItem = cart.find(item => item.product_id === productId);
+        
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            cart.push({ product_id: productId, quantity });
+        }
+        
+        localStorage.setItem('cart', JSON.stringify(cart));
+        Cart.updateCount();
+        return cart;
+    },
+    
+    remove: (productId) => {
+        const cart = Cart.get().filter(item => item.product_id !== productId);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        Cart.updateCount();
+        return cart;
+    },
+    
+    clear: () => {
+        localStorage.removeItem('cart');
+        Cart.updateCount();
+    },
+    
+    updateCount: () => {
+        const count = Cart.get().reduce((sum, item) => sum + item.quantity, 0);
+        const cartBadges = document.querySelectorAll('.cart-badge');
+        cartBadges.forEach(badge => {
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+        });
+    },
+    
+    getCount: () => {
+        return Cart.get().reduce((sum, item) => sum + item.quantity, 0);
+    }
+};
+
+// API Functions
+async function addToCart(productId, quantity = 1) {
+    try {
+        const response = await fetch('/api/cart/add/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: quantity
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Add to local cart
+            Cart.add(productId, quantity);
+            showNotification('Product added to cart successfully!', 'success');
+            return data;
+        } else {
+            showNotification(data.error || 'Failed to add to cart', 'error');
+            return null;
+        }
+    } catch (error) {
+        console.error('Cart error:', error);
+        // Fallback: add to local storage anyway
+        Cart.add(productId, quantity);
+        showNotification('Product added to cart! (offline mode)', 'success');
+        return null;
+    }
+}
+
+async function buyNow(productId, quantity = 1) {
+    try {
+        const response = await fetch('/api/buy-now/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: quantity
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification('Redirecting to checkout...', 'success');
+            if (data.redirect) {
+                setTimeout(() => window.location.href = data.redirect, 1000);
+            }
+            return data;
+        } else {
+            showNotification(data.error || 'Failed to process order', 'error');
+            return null;
+        }
+    } catch (error) {
+        console.error('Buy now error:', error);
+        showNotification('Please try again later', 'error');
+        return null;
+    }
+}
+
+// Notification system
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-20 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-3"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Helper function to get cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize cart count on page load
+document.addEventListener('DOMContentLoaded', () => {
+    Cart.updateCount();
+    
+    // Add event listeners for all Add to Cart buttons
+    document.querySelectorAll('[data-add-to-cart]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productId = this.dataset.productId;
+            const quantity = parseInt(this.dataset.quantity) || 1;
+            
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
+            
+            addToCart(productId, quantity).then(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add to Cart';
+            });
+        });
+    });
+    
+    // Add event listeners for all Buy Now buttons
+    document.querySelectorAll('[data-buy-now]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productId = this.dataset.productId;
+            const quantity = parseInt(this.dataset.quantity) || 1;
+            
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            
+            buyNow(productId, quantity).then(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-bolt mr-2"></i>Buy Now';
+            });
+        });
+    });
+    
+    // Quantity controls
+    document.querySelectorAll('.quantity-control').forEach(button => {
+        button.addEventListener('click', function() {
+            const input = this.closest('.quantity-group').querySelector('input[type="number"]');
+            const currentValue = parseInt(input.value);
+            
+            if (this.classList.contains('decrease') && currentValue > 1) {
+                input.value = currentValue - 1;
+            } else if (this.classList.contains('increase')) {
+                const max = parseInt(input.max || 999);
+                if (currentValue < max) {
+                    input.value = currentValue + 1;
+                }
+            }
+        });
+    });
+});
+
