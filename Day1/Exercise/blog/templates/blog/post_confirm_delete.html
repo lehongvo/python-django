@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Post - Django Blog{% endblock %}
+
+{% block content %}
+    <h1 style="color: #f5576c; margin-bottom: 25px;">⚠️ Delete Post</h1>
+    
+    <div class="delete-warning">
+        <strong>⚠️ Warning:</strong> Are you sure you want to delete this post?
+        <br><br>
+        This action cannot be undone!
+    </div>
+    
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h2 style="margin-bottom: 15px;">{{ post.title }}</h2>
+        <p class="post-meta">
+            By <strong>{{ post.author }}</strong> | {{ post.published_date|date:"M d, Y" }}
+        </p>
+        <p style="margin-top: 15px; color: #666;">
+            {{ post.content|truncatewords:30 }}
+        </p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-top: 30px;">
+            <button type="submit" class="btn btn-danger">🗑️ Yes, Delete This Post</button>
+            <a href="{% url 'post_detail' post.pk %}" class="btn btn-secondary">❌ Cancel</a>
+        </div>
+    </form>
+{% endblock %}
+

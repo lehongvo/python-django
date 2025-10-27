@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ post.title }} - Django Blog{% endblock %}
+
+{% block content %}
+    <article>
+        <h1 style="color: #667eea; margin-bottom: 15px;">{{ post.title }}</h1>
+        <p class="post-meta">
+            ✍️ By <strong>{{ post.author }}</strong> | 📅 {{ post.published_date|date:"M d, Y" }}
+            {% if post.is_published %}
+                <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 5px; margin-left: 10px;">Published</span>
+            {% else %}
+                <span style="background: #ffc107; color: #333; padding: 5px 10px; border-radius: 5px; margin-left: 10px;">Draft</span>
+            {% endif %}
+        </p>
+        <hr style="margin: 20px 0; border: none; border-top: 2px solid #eee;">
+        <div style="line-height: 1.8; font-size: 16px;">
+            {{ post.content|linebreaks }}
+        </div>
+    </article>
+    
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee;">
+        <a href="{% url 'post_list' %}" class="btn btn-secondary">← Back to List</a>
+        <a href="{% url 'post_update' post.pk %}" class="btn">✏️ Edit Post</a>
+        <a href="{% url 'post_delete' post.pk %}" class="btn btn-danger">🗑️ Delete Post</a>
+    </div>
+{% endblock %}
+

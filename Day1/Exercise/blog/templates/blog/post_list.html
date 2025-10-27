@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Blog Posts - Django Blog{% endblock %}
+
+{% block content %}
+    <h1 style="color: #667eea; margin-bottom: 25px;">📚 All Blog Posts</h1>
+    
+    {% if posts %}
+        {% for post in posts %}
+            <div class="post">
+                <h2><a href="{% url 'post_detail' post.pk %}">{{ post.title }}</a></h2>
+                <p>{{ post.content|truncatewords:30 }}</p>
+                <p class="post-meta">
+                    ✍️ By <strong>{{ post.author }}</strong> | 📅 {{ post.published_date|date:"M d, Y" }}
+                </p>
+                <div class="post-actions">
+                    <a href="{% url 'post_detail' post.pk %}" class="btn">Read More →</a>
+                    <a href="{% url 'post_update' post.pk %}" class="btn btn-secondary">✏️ Edit</a>
+                    <a href="{% url 'post_delete' post.pk %}" class="btn btn-danger">🗑️ Delete</a>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 50px;">
+            <h2 style="color: #999; margin-bottom: 20px;">No posts available yet.</h2>
+            <p style="color: #666; margin-bottom: 30px;">Be the first to create a blog post!</p>
+            <a href="{% url 'post_create' %}" class="btn">Create Your First Post ✨</a>
+        </div>
+    {% endif %}
+    
+    <div style="margin-top: 30px; text-align: center;">
+        <a href="{% url 'post_create' %}" class="btn">➕ Create New Post</a>
+    </div>
+{% endblock %}
+
