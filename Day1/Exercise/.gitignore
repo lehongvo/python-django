@@ -11,6 +11,11 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# PostgreSQL (already in .dockerignore)
+# Database dumps
+*.sql
+*.dump
+
 # Virtual Environment
 venv/
 env/
