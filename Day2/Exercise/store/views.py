@@ -345,6 +345,76 @@ def account_settings(request):
     return render(request, 'store/account_settings.html', context)
 
 
+def account_addresses(request):
+    """User addresses page"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to view addresses.')
+        return redirect('store:user_login')
+    
+    user = request.user
+    
+    # Get or create customer
+    customer, created = Customer.objects.get_or_create(
+        email=user.email,
+        defaults={
+            'name': user.get_full_name() or user.username,
+            'phone': '',
+            'address': '',
+            'city': '',
+            'state': '',
+            'postal_code': '',
+            'country': 'USA',
+        }
+    )
+    
+    if request.method == 'POST':
+        # Update customer address
+        customer.phone = request.POST.get('phone', '')
+        customer.address = request.POST.get('address', '')
+        customer.city = request.POST.get('city', '')
+        customer.state = request.POST.get('state', '')
+        customer.postal_code = request.POST.get('postal_code', '')
+        customer.country = request.POST.get('country', 'USA')
+        customer.save()
+        
+        messages.success(request, 'Address updated successfully!')
+        return redirect('store:account_addresses')
+    
+    context = {
+        'user': user,
+        'customer': customer,
+    }
+    return render(request, 'store/account_addresses.html', context)
+
+
+def account_orders(request):
+    """User orders page"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to view your orders.')
+        return redirect('store:user_login')
+    
+    user = request.user
+    
+    # Get customer info
+    customer = None
+    try:
+        customer = Customer.objects.get(email=user.email)
+    except Customer.DoesNotExist:
+        pass
+    
+    # Get user orders
+    orders = []
+    if customer:
+        orders = Order.objects.filter(customer=customer).order_by('-order_date').select_related('customer').prefetch_related('items__product')
+    
+    context = {
+        'user': user,
+        'customer': customer,
+        'orders': orders,
+    }
+    return render(request, 'store/account_orders.html', context)
+
+
 def cart(request):
     """Shopping cart page"""
     return render(request, 'store/cart.html')
@@ -352,6 +422,15 @@ def cart(request):
 
 def logout_view(request):
     """Logout user"""
+    # Clear cart when user logs out
+    if request.user.is_authenticated:
+        try:
+            from .models import Cart, Customer
+            customer = Customer.objects.get(email=request.user.email)
+            Cart.objects.filter(customer=customer).delete()
+        except:
+            pass
+    
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
     return redirect('store:home')

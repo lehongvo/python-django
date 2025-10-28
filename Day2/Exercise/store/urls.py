@@ -13,9 +13,9 @@ urlpatterns = [
     path('login/', views.user_login, name='user_login'),
     path('register/', views.register, name='register'),
     path('account/', views.account, name='account'),
-    path('account/orders/', views.account, name='account_orders'),
+    path('account/orders/', views.account_orders, name='account_orders'),
     path('account/settings/', views.account_settings, name='account_settings'),
-    path('account/addresses/', views.account, name='account_addresses'),
+    path('account/addresses/', views.account_addresses, name='account_addresses'),
     path('logout/', views.logout_view, name='logout'),
     path('track-order/', views.order_tracking, name='order_tracking'),
 ]

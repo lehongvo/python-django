@@ -1,13 +1,13 @@
 // Cart functionality for TechStore 2025
 
-// Shopping Cart (stored in localStorage)
+// Shopping Cart (stored in localStorage AND database)
 const Cart = {
     get: () => {
         const cart = localStorage.getItem('cart');
         return cart ? JSON.parse(cart) : [];
     },
     
-    add: (productId, quantity = 1) => {
+    add: async (productId, quantity = 1) => {
         const cart = Cart.get();
         const existingItem = cart.find(item => item.product_id === productId);
         
@@ -18,24 +18,43 @@ const Cart = {
         }
         
         localStorage.setItem('cart', JSON.stringify(cart));
-        Cart.updateCount();
+        await Cart.updateCount();
         return cart;
     },
     
-    remove: (productId) => {
+    remove: async (productId) => {
         const cart = Cart.get().filter(item => item.product_id !== productId);
         localStorage.setItem('cart', JSON.stringify(cart));
-        Cart.updateCount();
+        await Cart.updateCount();
         return cart;
     },
     
-    clear: () => {
+    clear: async () => {
         localStorage.removeItem('cart');
-        Cart.updateCount();
+        await Cart.updateCount();
     },
     
-    updateCount: () => {
+    updateCount: async () => {
         const count = Cart.get().reduce((sum, item) => sum + item.quantity, 0);
+        
+        // Sync with server if user is logged in
+        try {
+            if (count > 0) {
+                await fetch('/api/cart/sync/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        cart: Cart.get()
+                    })
+                });
+            }
+        } catch (error) {
+            console.log('Cart sync error (not logged in):', error);
+        }
+        
         const cartBadges = document.querySelectorAll('.cart-badge');
         cartBadges.forEach(badge => {
             if (badge) {
@@ -73,14 +92,18 @@ async function addToCart(productId, quantity = 1) {
             showNotification('Product added to cart successfully!', 'success');
             return data;
         } else {
-            showNotification(data.error || 'Failed to add to cart', 'error');
+            // Check if login is required
+            if (data.requires_login) {
+                showNotification('Please log in to add items to cart', 'error');
+                setTimeout(() => window.location.href = '/login/', 1500);
+            } else {
+                showNotification(data.error || 'Failed to add to cart', 'error');
+            }
             return null;
         }
     } catch (error) {
         console.error('Cart error:', error);
-        // Fallback: add to local storage anyway
-        Cart.add(productId, quantity);
-        showNotification('Product added to cart! (offline mode)', 'success');
+        showNotification('Please log in to add items to cart', 'error');
         return null;
     }
 }
@@ -108,7 +131,13 @@ async function buyNow(productId, quantity = 1) {
             }
             return data;
         } else {
-            showNotification(data.error || 'Failed to process order', 'error');
+            // Check if login is required
+            if (data.requires_login) {
+                showNotification('Please log in to purchase products', 'error');
+                setTimeout(() => window.location.href = '/login/', 1500);
+            } else {
+                showNotification(data.error || 'Failed to process order', 'error');
+            }
             return null;
         }
     } catch (error) {
@@ -158,6 +187,14 @@ function getCookie(name) {
 // Initialize cart count on page load
 document.addEventListener('DOMContentLoaded', () => {
     Cart.updateCount();
+    
+    // Clear cart badge when user logs out
+    const logoutButtons = document.querySelectorAll('[onclick="logout()"]');
+    logoutButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            Cart.clear();
+        });
+    });
     
     // Add event listeners for all Add to Cart buttons
     document.querySelectorAll('[data-add-to-cart]').forEach(button => {

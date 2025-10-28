@@ -177,8 +177,21 @@
 
 <script>
 function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        window.location.href = "{% url 'store:logout' %}";
+    if (typeof showLogoutModal !== 'undefined') {
+        showLogoutModal();
+    } else {
+        // Fallback for pages without modal
+        if (confirm('Are you sure you want to logout?')) {
+            localStorage.removeItem('cart');
+            const cartBadges = document.querySelectorAll('.cart-badge');
+            cartBadges.forEach(badge => {
+                if (badge) {
+                    badge.textContent = '0';
+                    badge.style.display = 'none';
+                }
+            });
+            window.location.href = "{% url 'store:logout' %}";
+        }
     }
 }
 </script>

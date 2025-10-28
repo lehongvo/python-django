@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.shortcuts import get_object_or_404
-from .models import Product, Category, Order, OrderItem, Customer
+from .models import Product, Category, Order, OrderItem, Customer, Cart
 from .serializers import (
     ProductSerializer, CategorySerializer,
     OrderSerializer, OrderItemSerializer
@@ -81,6 +81,17 @@ class CategoryViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 def add_to_cart(request):
     """Add product to shopping cart"""
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return Response(
+            {
+                'error': 'Please log in to add items to cart',
+                'requires_login': True,
+                'login_url': '/login/'
+            },
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
     product_id = request.data.get('product_id')
     quantity = request.data.get('quantity', 1)
     
@@ -104,18 +115,57 @@ def add_to_cart(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # For now, return success (implement cart logic later)
+    # Get or create customer
+    try:
+        customer = Customer.objects.get(email=request.user.email)
+    except Customer.DoesNotExist:
+        # Create customer if doesn't exist
+        customer = Customer.objects.create(
+            name=request.user.get_full_name() or request.user.username,
+            email=request.user.email,
+            phone='',
+            address='',
+            city='',
+            state='',
+            postal_code='',
+            country='USA'
+        )
+    
+    # Add or update cart item in database
+    cart_item, created = Cart.objects.get_or_create(
+        customer=customer,
+        product=product,
+        defaults={'quantity': quantity}
+    )
+    
+    if not created:
+        # Update quantity if item already exists
+        cart_item.quantity += quantity
+        cart_item.save()
+    
+    # Return success
     return Response({
         'message': f'Added {quantity} x {product.name} to cart',
         'product': ProductSerializer(product).data,
-        'quantity': quantity,
-        'total': float(product.price) * quantity
+        'quantity': cart_item.quantity,
+        'total': float(product.price) * cart_item.quantity
     })
 
 
 @api_view(['POST'])
 def buy_now(request):
     """Buy product immediately"""
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return Response(
+            {
+                'error': 'Please log in to purchase products',
+                'requires_login': True,
+                'login_url': '/login/'
+            },
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
     product_id = request.data.get('product_id')
     quantity = request.data.get('quantity', 1)
     
@@ -162,4 +212,57 @@ def order_detail(request, order_number):
     
     serializer = OrderSerializer(order)
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+def cart_sync(request):
+    """Sync cart from localStorage to database"""
+    if not request.user.is_authenticated:
+        return Response(
+            {'error': 'Please log in to sync your cart'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    # Get or create customer
+    from django.contrib.auth.models import User
+    try:
+        customer = Customer.objects.get(email=request.user.email)
+    except Customer.DoesNotExist:
+        # Create customer if doesn't exist
+        customer = Customer.objects.create(
+            name=request.user.get_full_name() or request.user.username,
+            email=request.user.email,
+            phone='',
+            address='',
+            city='',
+            state='',
+            postal_code='',
+            country='USA'
+        )
+    
+    cart_data = request.data.get('cart', [])
+    
+    # Clear existing cart for this customer
+    Cart.objects.filter(customer=customer).delete()
+    
+    # Add new cart items
+    for item in cart_data:
+        try:
+            product = Product.objects.get(id=item['product_id'])
+            Cart.objects.create(
+                customer=customer,
+                product=product,
+                quantity=item['quantity']
+            )
+        except Product.DoesNotExist:
+            pass
+    
+    return Response({'message': 'Cart synced successfully'})
+
+
+@api_view(['POST'])
+def cart_clear(request):
+    """Clear cart for logged out user"""
+    # Clear localStorage on client
+    return Response({'message': 'Cart cleared'})
 

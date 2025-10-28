@@ -242,13 +242,16 @@
                 <!-- Right Side -->
                 <div class="flex items-center space-x-4">
                     <!-- Search -->
-                    <div class="hidden md:block">
+                    <form action="{% url 'store:product_list' %}" method="get" class="hidden md:block">
                         <div class="relative">
-                            <input type="text" placeholder="Search products..." 
+                            <input type="text" name="search" placeholder="Search products..." 
                                    class="w-64 px-4 py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                             <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-indigo-600 hover:text-indigo-700">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
                         </div>
-                    </div>
+                    </form>
                     
                     <!-- Cart -->
                     <a href="{% url 'store:cart' %}" class="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors">
@@ -457,5 +460,60 @@
     </script>
     
     {% block extra_js %}{% endblock %}
+    
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
+            <div class="p-8">
+                <!-- Icon -->
+                <div class="text-center mb-6">
+                    <div class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-sign-out-alt text-3xl text-red-600"></i>
+                    </div>
+                </div>
+                
+                <!-- Title -->
+                <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">Confirm Logout</h3>
+                <p class="text-gray-600 text-center mb-6">Are you sure you want to logout? Your cart will be cleared.</p>
+                
+                <!-- Buttons -->
+                <div class="flex space-x-4">
+                    <button onclick="closeLogoutModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button onclick="confirmLogout()" class="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('hidden');
+        }
+        
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.add('hidden');
+        }
+        
+        function confirmLogout() {
+            // Clear cart from localStorage
+            localStorage.removeItem('cart');
+            
+            // Update cart badge
+            const cartBadges = document.querySelectorAll('.cart-badge');
+            cartBadges.forEach(badge => {
+                if (badge) {
+                    badge.textContent = '0';
+                    badge.style.display = 'none';
+                }
+            });
+            
+            // Redirect to logout
+            window.location.href = '{% url "store:logout" %}';
+        }
+    </script>
 </body>
 </html>

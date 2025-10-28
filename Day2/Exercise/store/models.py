@@ -195,3 +195,19 @@ class OrderItem(models.Model):
     def subtotal(self):
         return self.price * self.quantity
 
+
+class Cart(models.Model):
+    """Cart Model - Stores user's shopping cart"""
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='cart_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['customer', 'product']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.customer.name} - {self.product.name} ({self.quantity})"
+
