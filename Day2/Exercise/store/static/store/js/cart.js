@@ -35,11 +35,27 @@ const Cart = {
     },
     
     updateCount: async () => {
-        const count = Cart.get().reduce((sum, item) => sum + item.quantity, 0);
+        let items = Cart.get();
+        let count = items.reduce((sum, item) => sum + item.quantity, 0);
         
-        // Sync with server if user is logged in
-        try {
-            if (count > 0) {
+        // If local cart is empty, try fetching server cart (after login)
+        if (count === 0) {
+            try {
+                const res = await fetch('/api/cart/list/');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.items) && data.items.length > 0) {
+                        items = data.items.map(i => ({ product_id: i.product_id, quantity: i.quantity }));
+                        localStorage.setItem('cart', JSON.stringify(items));
+                        count = items.reduce((sum, item) => sum + item.quantity, 0);
+                    }
+                }
+            } catch (e) {
+                // not logged in or network issue
+            }
+        } else {
+            // Sync local cart to server if has items
+            try {
                 await fetch('/api/cart/sync/', {
                     method: 'POST',
                     headers: {
@@ -47,12 +63,12 @@ const Cart = {
                         'X-CSRFToken': getCookie('csrftoken')
                     },
                     body: JSON.stringify({
-                        cart: Cart.get()
+                        cart: items
                     })
                 });
+            } catch (error) {
+                console.log('Cart sync error (not logged in):', error);
             }
-        } catch (error) {
-            console.log('Cart sync error (not logged in):', error);
         }
         
         const cartBadges = document.querySelectorAll('.cart-badge');
@@ -78,6 +94,7 @@ async function addToCart(productId, quantity = 1) {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
+            credentials: 'include',
             body: JSON.stringify({
                 product_id: productId,
                 quantity: quantity
@@ -116,6 +133,7 @@ async function buyNow(productId, quantity = 1) {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
+            credentials: 'include',
             body: JSON.stringify({
                 product_id: productId,
                 quantity: quantity

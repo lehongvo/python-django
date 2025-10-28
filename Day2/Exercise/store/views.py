@@ -10,10 +10,26 @@ from django.db.models import Q
 def home(request):
     """Homepage with featured products"""
     featured_products = Product.objects.filter(is_featured=True, status='published')[:6]
-    categories = Category.objects.filter(is_active=True)
+    from django.core.paginator import Paginator
+    try:
+        cat_limit = int(request.GET.get('cat_limit', 6))
+    except ValueError:
+        cat_limit = 6
+    try:
+        cat_page = int(request.GET.get('cat_page', 1))
+    except ValueError:
+        cat_page = 1
+    categories_qs = Category.objects.filter(is_active=True).order_by('name')
+    cat_paginator = Paginator(categories_qs, max(1, min(cat_limit, 18)))
+    cat_page_obj = cat_paginator.get_page(cat_page)
+    categories = cat_page_obj.object_list
     context = {
         'featured_products': featured_products,
         'categories': categories,
+        'cat_paginator': cat_paginator,
+        'cat_page_obj': cat_page_obj,
+        'cat_limit': cat_limit,
+        'cat_limits': [6, 9, 12, 15],
     }
     return render(request, 'store/home.html', context)
 
@@ -42,6 +58,31 @@ def product_list(request):
     featured_only = request.GET.get('featured') == 'true'
     if featured_only:
         products = products.filter(is_featured=True)
+
+    # Sort
+    sort_by = request.GET.get('sort', 'newest')
+    if sort_by == 'price_low':
+        products = products.order_by('price')
+    elif sort_by == 'price_high':
+        products = products.order_by('-price')
+    elif sort_by == 'name':
+        products = products.order_by('name')
+    else:
+        products = products.order_by('-created_at')
+
+    # Pagination
+    from django.core.paginator import Paginator
+    try:
+        limit = int(request.GET.get('limit', 24))
+    except ValueError:
+        limit = 24
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        page = 1
+    paginator = Paginator(products, max(1, min(limit, 100)))
+    page_obj = paginator.get_page(page)
+    products = page_obj.object_list
     
     categories = Category.objects.filter(is_active=True)
     
@@ -50,6 +91,13 @@ def product_list(request):
         'categories': categories,
         'current_category': category,
         'search_query': search_query,
+        'sort_by': sort_by,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'limit': limit,
+        'limits': [12, 24, 36, 48, 60],
+        'page': page,
+        'total_count': paginator.count,
     }
     return render(request, 'store/product_list.html', context)
 
@@ -422,15 +470,6 @@ def cart(request):
 
 def logout_view(request):
     """Logout user"""
-    # Clear cart when user logs out
-    if request.user.is_authenticated:
-        try:
-            from .models import Cart, Customer
-            customer = Customer.objects.get(email=request.user.email)
-            Cart.objects.filter(customer=customer).delete()
-        except:
-            pass
-    
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
     return redirect('store:home')
@@ -454,3 +493,20 @@ def order_tracking(request):
         'order_number': order_number,
     }
     return render(request, 'store/order_tracking.html', context)
+
+
+# Support pages
+def help_center(request):
+    return render(request, 'store/support_help_center.html')
+
+
+def contact_us(request):
+    return render(request, 'store/support_contact.html')
+
+
+def shipping_info(request):
+    return render(request, 'store/support_shipping.html')
+
+
+def returns_policy(request):
+    return render(request, 'store/support_returns.html')

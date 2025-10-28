@@ -229,6 +229,36 @@
             </div>
             {% endfor %}
         </div>
+
+        <!-- Category Pagination -->
+        <div class="flex justify-between items-center mt-10">
+            <div class="text-sm text-gray-600">
+                Page {{ cat_page_obj.number }} of {{ cat_paginator.num_pages }}
+            </div>
+            <div class="flex items-center space-x-2">
+                {% if cat_page_obj.has_previous %}
+                <a href="?cat_page={{ cat_page_obj.previous_page_number }}&cat_limit={{ cat_limit }}"
+                   class="px-4 py-2 bg-white border rounded-xl hover:bg-gray-50">Prev</a>
+                {% else %}
+                <span class="px-4 py-2 bg-gray-100 border rounded-xl text-gray-400">Prev</span>
+                {% endif %}
+                {% if cat_page_obj.has_next %}
+                <a href="?cat_page={{ cat_page_obj.next_page_number }}&cat_limit={{ cat_limit }}"
+                   class="px-4 py-2 bg-white border rounded-xl hover:bg-gray-50">Next</a>
+                {% else %}
+                <span class="px-4 py-2 bg-gray-100 border rounded-xl text-gray-400">Next</span>
+                {% endif %}
+            </div>
+            <form method="get">
+                <input type="hidden" name="cat_page" value="1">
+                <label class="text-sm text-gray-600 mr-2">Per row</label>
+                <select name="cat_limit" class="px-3 py-2 border rounded-xl" onchange="this.form.submit()">
+                    {% for n in cat_limits %}
+                    <option value="{{ n }}" {% if cat_limit == n %}selected{% endif %}>{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
     </div>
 </section>
 {% endif %}

@@ -18,6 +18,11 @@ urlpatterns = [
     path('account/addresses/', views.account_addresses, name='account_addresses'),
     path('logout/', views.logout_view, name='logout'),
     path('track-order/', views.order_tracking, name='order_tracking'),
+    # Support pages
+    path('support/help-center/', views.help_center, name='help_center'),
+    path('support/contact/', views.contact_us, name='contact_us'),
+    path('support/shipping/', views.shipping_info, name='shipping_info'),
+    path('support/returns/', views.returns_policy, name='returns_policy'),
 ]
 
 

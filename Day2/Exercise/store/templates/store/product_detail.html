@@ -27,23 +27,29 @@
                 <!-- Main Image -->
                 <div class="aspect-w-1 aspect-h-1 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl overflow-hidden">
                     <div class="flex items-center justify-center h-96">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                        {% else %}
                         <div class="text-center">
                             <i class="fas fa-image text-8xl text-indigo-300 mb-4"></i>
                             <p class="text-indigo-500 font-medium text-lg">Product Image Gallery</p>
                             <p class="text-indigo-400 text-sm mt-2">High-quality product photos</p>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
                 
                 <!-- Thumbnail Images -->
                 <div class="grid grid-cols-4 gap-4">
-                    {% for i in "1234" %}
                     <div class="aspect-w-1 aspect-h-1 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                        {% else %}
                         <div class="flex items-center justify-center h-20">
                             <i class="fas fa-image text-2xl text-gray-400"></i>
                         </div>
+                        {% endif %}
                     </div>
-                    {% endfor %}
                 </div>
             </div>
             

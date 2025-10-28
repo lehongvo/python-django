@@ -49,7 +49,7 @@
                             <a href="{% url 'store:product_list' %}" 
                                class="flex items-center justify-between p-3 rounded-xl {% if not current_category %}bg-indigo-50 text-indigo-700 border border-indigo-200{% else %}hover:bg-gray-50{% endif %} transition-colors">
                                 <span class="font-medium">All Categories</span>
-                                <span class="text-sm text-gray-500">{{ products.count }}</span>
+                        <span class="text-sm text-gray-500">{{ total_count }}</span>
                             </a>
                             {% for category in categories %}
                             <a href="{% url 'store:product_list' %}?category={{ category.slug }}" 
@@ -105,7 +105,7 @@
                             {% endif %}
                         </h2>
                         <p class="text-gray-600">
-                            <span class="font-semibold">{{ products.count }}</span> products found
+                            <span class="font-semibold">{{ total_count }}</span> products found
                             {% if current_category %}
                                 in {{ current_category.name }}
                             {% endif %}
@@ -130,11 +130,15 @@
                     {% for product in products %}
                     <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden group">
                         <!-- Product Image -->
-                        <div class="relative h-64 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                        <div class="relative h-64 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center overflow-hidden">
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                            {% else %}
                             <div class="text-center">
                                 <i class="fas fa-image text-5xl text-indigo-300 mb-3"></i>
                                 <p class="text-indigo-500 font-medium text-sm">Product Image</p>
                             </div>
+                            {% endif %}
                             
                             <!-- Discount Badge -->
                             {% if product.discount_percent > 0 %}
@@ -146,10 +150,10 @@
                             <!-- Quick Actions -->
                             <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                                 <div class="flex space-x-2">
-                                    <button class="bg-white text-gray-900 px-3 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors">
+                                    <a href="{% url 'store:product_detail' product.slug %}" class="bg-white text-gray-900 px-3 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors inline-flex items-center">
                                         <i class="fas fa-eye mr-1"></i>Quick View
-                                    </button>
-                                    <button class="bg-indigo-600 text-white px-3 py-2 rounded-full text-sm font-medium hover:bg-indigo-700 transition-colors">
+                                    </a>
+                                    <button type="button" class="bg-indigo-600 text-white px-3 py-2 rounded-full text-sm font-medium hover:bg-indigo-700 transition-colors" onclick="addToWishlist({{ product.id }})">
                                         <i class="fas fa-heart mr-1"></i>Wishlist
                                     </button>
                                 </div>
@@ -228,11 +232,37 @@
                     {% endfor %}
                 </div>
                 
-                <!-- Load More Button -->
-                <div class="text-center mt-12">
-                    <button class="btn-modern px-8 py-4">
-                        <i class="fas fa-plus mr-2"></i>Load More Products
-                    </button>
+                <!-- Pagination -->
+                <div class="flex justify-between items-center mt-10">
+                    <div class="text-sm text-gray-600">
+                        Page {{ page_obj.number }} of {{ paginator.num_pages }}
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&limit={{ limit }}{% if current_category %}&category={{ current_category.slug }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                           class="px-4 py-2 bg-white border rounded-xl hover:bg-gray-50">Prev</a>
+                        {% else %}
+                        <span class="px-4 py-2 bg-gray-100 border rounded-xl text-gray-400">Prev</span>
+                        {% endif %}
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&limit={{ limit }}{% if current_category %}&category={{ current_category.slug }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                           class="px-4 py-2 bg-white border rounded-xl hover:bg-gray-50">Next</a>
+                        {% else %}
+                        <span class="px-4 py-2 bg-gray-100 border rounded-xl text-gray-400">Next</span>
+                        {% endif %}
+                    </div>
+                    <form method="get">
+                        {% if current_category %}<input type="hidden" name="category" value="{{ current_category.slug }}">{% endif %}
+                        {% if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
+                        {% if sort_by %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
+                        <input type="hidden" name="page" value="1">
+                        <label class="text-sm text-gray-600 mr-2">Per page</label>
+                        <select name="limit" class="px-3 py-2 border rounded-xl" onchange="this.form.submit()">
+                            {% for n in limits %}
+                            <option value="{{ n }}" {% if limit == n %}selected{% endif %}>{{ n }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
                 </div>
                 
                 {% else %}

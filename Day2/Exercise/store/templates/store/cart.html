@@ -75,9 +75,28 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Prefer server-side cart if logged in
+    try {
+        const res = await fetch('/api/cart/list/', { credentials: 'include' });
+        if (res.ok) {
+            const data = await res.json();
+            const items = data.items || [];
+            if (items.length > 0) {
+                document.getElementById('cart-content').style.display = 'none';
+                document.getElementById('cart-with-items').style.display = 'block';
+                // Mirror to localStorage for badge and other pages
+                const localItems = items.map(i => ({ product_id: i.product_id, quantity: i.quantity }));
+                localStorage.setItem('cart', JSON.stringify(localItems));
+                Cart.updateCount();
+                displayCart(localItems);
+                return;
+            }
+        }
+    } catch (e) {
+        // Not logged in or error: fall back to localStorage below
+    }
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
     if (cart.length === 0) {
         document.getElementById('cart-content').style.display = 'block';
         document.getElementById('cart-with-items').style.display = 'none';
@@ -147,22 +166,37 @@ async function displayCart(cart) {
     document.getElementById('grand-total').textContent = '$' + grandTotal.toFixed(2);
 }
 
-function updateQuantity(productId, delta) {
+async function updateQuantity(productId, delta) {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const item = cart.find(i => i.product_id === productId);
-    
-    if (item) {
-        item.quantity = Math.max(1, item.quantity + delta);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        displayCart(cart);
-        Cart.updateCount();
-    }
+    if (!item) return;
+    item.quantity = Math.max(1, item.quantity + delta);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    displayCart(cart);
+    Cart.updateCount();
+    // Persist to server if logged in
+    try {
+        await fetch('/api/cart/update/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            credentials: 'include',
+            body: JSON.stringify({ product_id: productId, quantity: item.quantity })
+        });
+    } catch (e) {}
 }
 
-function removeFromCart(productId) {
+async function removeFromCart(productId) {
     Cart.remove(productId);
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     displayCart(cart);
+    try {
+        await fetch('/api/cart/remove/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            credentials: 'include',
+            body: JSON.stringify({ product_id: productId })
+        });
+    } catch (e) {}
 }
 </script>
 {% endblock %}

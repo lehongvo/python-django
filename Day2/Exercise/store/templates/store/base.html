@@ -262,7 +262,13 @@
                     <!-- User Menu -->
                     <a href="{% url 'store:account' %}" class="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 transition-colors">
                         <i class="fas fa-user-circle text-lg"></i>
-                        <span class="hidden md:block font-medium">Account</span>
+                        {% if request.user.is_authenticated %}
+                            <span class="hidden md:block font-medium">
+                                {% if request.user.is_staff %}Admin{% else %}{{ request.user.get_username }}{% endif %}
+                            </span>
+                        {% else %}
+                            <span class="hidden md:block font-medium">Account</span>
+                        {% endif %}
                     </a>
                     
                     <!-- Admin Link -->
@@ -356,10 +362,10 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Support</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Help Center</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Shipping Info</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Returns</a></li>
+                        <li><a href="{% url 'store:help_center' %}" class="text-gray-400 hover:text-white transition-colors">Help Center</a></li>
+                        <li><a href="{% url 'store:contact_us' %}" class="text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
+                        <li><a href="{% url 'store:shipping_info' %}" class="text-gray-400 hover:text-white transition-colors">Shipping Info</a></li>
+                        <li><a href="{% url 'store:returns_policy' %}" class="text-gray-400 hover:text-white transition-colors">Returns</a></li>
                     </ul>
                 </div>
             </div>
@@ -460,6 +466,21 @@
     </script>
     
     {% block extra_js %}{% endblock %}
+    <script>
+      async function quickView(id) {
+        try {
+          const res = await fetch(`/api/products/${id}/`, { credentials: 'include' });
+          if (!res.ok) throw new Error('Failed');
+          const p = await res.json();
+          window.location.href = `/product/${p.slug}/`;
+        } catch (e) {
+          showNotification('Unable to open quick view', 'error');
+        }
+      }
+      function addToWishlist(id) {
+        showNotification('Added to wishlist (demo)', 'success');
+      }
+    </script>
     
     <!-- Logout Confirmation Modal -->
     <div id="logoutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">

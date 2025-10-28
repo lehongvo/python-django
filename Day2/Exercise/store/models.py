@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.urls import reverse
 
 
@@ -53,6 +54,7 @@ class Product(models.Model):
     slug = models.SlugField(max_length=200, unique=True)
     description = models.TextField()
     short_description = models.CharField(max_length=500, blank=True)
+    image = models.ImageField(upload_to='products/', blank=True, null=True)
     
     # Pricing
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -115,6 +117,7 @@ class Product(models.Model):
 
 class Customer(models.Model):
     """Customer Model"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='customer_profile')
     name = models.CharField(max_length=200)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True)

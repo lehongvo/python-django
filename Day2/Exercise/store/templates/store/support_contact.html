@@ -1,0 +1,23 @@
+{% extends 'store/base.html' %}
+{% block title %}Contact Us - TechStore 2025{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-16">
+  <h1 class="text-3xl font-bold mb-6">Contact Us</h1>
+  <p class="text-gray-600 mb-8">We'd love to hear from you.</p>
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="p-6 bg-white rounded-xl shadow">
+      <p class="mb-2"><strong>Email:</strong> support@example.com</p>
+      <p class="mb-2"><strong>Phone:</strong> +1 (555) 123-4567</p>
+      <p><strong>Hours:</strong> Mon–Fri, 9:00–18:00</p>
+    </div>
+    <div class="p-6 bg-white rounded-xl shadow">
+      <form>
+        <input class="w-full border rounded-lg p-3 mb-3" placeholder="Your name" />
+        <input class="w-full border rounded-lg p-3 mb-3" placeholder="Your email" />
+        <textarea class="w-full border rounded-lg p-3 mb-3" rows="4" placeholder="Message"></textarea>
+        <button class="btn-modern">Send</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
