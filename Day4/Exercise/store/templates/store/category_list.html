@@ -1,40 +1,162 @@
 {% extends 'store/base.html' %}
 {% load static %}
+{% load store_filters %}
 
-{% block title %}Categories - TechStore 2025{% endblock %}
+{% block title %}Categories - {{ site_name }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4">
-                <i class="fas fa-th-large text-indigo-600 mr-3"></i>
-                Product Categories
+<!-- Page Header -->
+<section class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                <i class="fas fa-th-large mr-3"></i>Product Categories
             </h1>
-            <p class="text-gray-600 text-lg">Browse our wide selection of product categories</p>
+            <p class="text-xl text-indigo-100 max-w-2xl mx-auto">
+                Explore our diverse range of product categories
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-12 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Results Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">All Categories</h2>
+                <p class="text-gray-600">
+                    <span class="font-semibold">{{ total_count }}</span> categories available
+                </p>
+            </div>
+            
+            <!-- View Toggle -->
+            <div class="flex items-center space-x-2 mt-4 sm:mt-0">
+                <span class="text-sm text-gray-600">Per page:</span>
+                <form method="get" class="flex items-center space-x-2">
+                    <select name="limit" class="px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" onchange="this.form.submit()">
+                        {% for n in limits %}
+                        <option value="{{ n }}" {% if limit == n %}selected{% endif %}>{{ n }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
         </div>
         
         {% if categories %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {% for category in categories %}
-            <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                <div class="h-48 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
-                    <i class="fas fa-th-large text-white text-6xl"></i>
+            <div class="category-card bg-white rounded-2xl shadow-lg overflow-hidden group hover:shadow-2xl transition-all duration-300">
+                <!-- Category Image -->
+                <div class="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden">
+                    {% if category.name == "Electronics" %}
+                    <div class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        <i class="fas fa-microchip text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Computers & Laptops" %}
+                    <div class="w-full h-full bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center">
+                        <i class="fas fa-laptop text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Phones & Accessories" %}
+                    <div class="w-full h-full bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center">
+                        <i class="fas fa-mobile-alt text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Home & Kitchen" %}
+                    <div class="w-full h-full bg-gradient-to-br from-orange-500 to-yellow-600 flex items-center justify-center">
+                        <i class="fas fa-home text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Appliances" %}
+                    <div class="w-full h-full bg-gradient-to-br from-teal-500 to-green-600 flex items-center justify-center">
+                        <i class="fas fa-blender text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Sports & Fitness" %}
+                    <div class="w-full h-full bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center">
+                        <i class="fas fa-dumbbell text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Beauty & Personal Care" %}
+                    <div class="w-full h-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                        <i class="fas fa-spa text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Health & Wellness" %}
+                    <div class="w-full h-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center">
+                        <i class="fas fa-heartbeat text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Baby" %}
+                    <div class="w-full h-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+                        <i class="fas fa-baby text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Toys & Games" %}
+                    <div class="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                        <i class="fas fa-gamepad text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Books & Media" %}
+                    <div class="w-full h-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                        <i class="fas fa-book text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Fashion Men" %}
+                    <div class="w-full h-full bg-gradient-to-br from-slate-600 to-gray-800 flex items-center justify-center">
+                        <i class="fas fa-male text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Fashion Women" %}
+                    <div class="w-full h-full bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center">
+                        <i class="fas fa-female text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Shoes" %}
+                    <div class="w-full h-full bg-gradient-to-br from-brown-500 to-amber-600 flex items-center justify-center">
+                        <i class="fas fa-shoe-prints text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Watches & Jewelry" %}
+                    <div class="w-full h-full bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center">
+                        <i class="fas fa-gem text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Automotive" %}
+                    <div class="w-full h-full bg-gradient-to-br from-gray-600 to-black flex items-center justify-center">
+                        <i class="fas fa-car text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Garden & Outdoor" %}
+                    <div class="w-full h-full bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center">
+                        <i class="fas fa-seedling text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Pet Supplies" %}
+                    <div class="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                        <i class="fas fa-paw text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Office & Stationery" %}
+                    <div class="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
+                        <i class="fas fa-pen-fancy text-white text-6xl"></i>
+                    </div>
+                    {% elif category.name == "Grocery & Gourmet" %}
+                    <div class="w-full h-full bg-gradient-to-br from-lime-500 to-green-600 flex items-center justify-center">
+                        <i class="fas fa-shopping-basket text-white text-6xl"></i>
+                    </div>
+                    {% else %}
+                    <div class="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                        <i class="fas fa-th-large text-white text-6xl"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Hover Overlay -->
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div class="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-semibold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            <i class="fas fa-arrow-right mr-2"></i>Explore Now
+                        </div>
+                    </div>
                 </div>
                 
+                <!-- Category Info -->
                 <div class="p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-2xl font-bold text-gray-900">{{ category.name }}</h3>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{{ category.name }}</h3>
                         <span class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-semibold">
                             {{ category.product_set.count }} products
                         </span>
                     </div>
                     
-                    <p class="text-gray-600 mb-6 line-clamp-2">{{ category.description|default:"Discover amazing products in this category." }}</p>
+                    <p class="text-gray-600 mb-4 text-sm line-clamp-2">{{ category.description|default:"Discover amazing products in this category." }}</p>
                     
                     <a href="{% url 'store:product_list' %}?category={{ category.slug }}" 
-                       class="block w-full text-center bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
+                       class="block w-full text-center bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105">
                         <i class="fas fa-arrow-right mr-2"></i>
                         Browse {{ category.name }}
                     </a>
@@ -43,17 +165,135 @@
             {% endfor %}
         </div>
         
+        <!-- Pagination -->
+        <div class="flex justify-between items-center mt-10">
+            <div class="text-sm text-gray-600">
+                Page {{ page_obj.number }} of {{ paginator.num_pages }}
+            </div>
+            <div class="flex items-center space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&limit={{ limit }}"
+                   class="px-4 py-2 bg-white border rounded-xl hover:bg-gray-50 transition-colors">Prev</a>
+                {% else %}
+                <span class="px-4 py-2 bg-gray-100 border rounded-xl text-gray-400">Prev</span>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&limit={{ limit }}"
+                   class="px-4 py-2 bg-white border rounded-xl hover:bg-gray-50 transition-colors">Next</a>
+                {% else %}
+                <span class="px-4 py-2 bg-gray-100 border rounded-xl text-gray-400">Next</span>
+                {% endif %}
+            </div>
+        </div>
+        
         {% else %}
-        <div class="bg-white rounded-2xl shadow-lg p-16 text-center">
-            <i class="fas fa-th-large text-6xl text-gray-300 mb-6"></i>
+        <!-- No Categories Found -->
+        <div class="text-center py-16">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-th-large text-4xl text-gray-400"></i>
+            </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-4">No categories available</h3>
-            <p class="text-gray-600 mb-8">Categories will appear here when they are added.</p>
-            <a href="{% url 'store:home' %}" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
-                <i class="fas fa-home mr-2"></i>
-                Return to Home
+            <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                Categories will appear here when they are added to the system.
+            </p>
+            <a href="{% url 'store:home' %}" class="btn-modern">
+                <i class="fas fa-home mr-2"></i>Return to Home
             </a>
         </div>
         {% endif %}
     </div>
-</div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .category-card {
+        transition: all 0.3s ease;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    /* Custom gradient for brown color */
+    .from-brown-500 {
+        background-color: #8B4513;
+    }
+    
+    .to-amber-600 {
+        background-color: #D97706;
+    }
+    
+    /* Animation for category cards */
+    .category-card {
+        animation: fadeInUp 0.6s ease forwards;
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Stagger animation delay */
+    .category-card:nth-child(1) { animation-delay: 0.1s; }
+    .category-card:nth-child(2) { animation-delay: 0.2s; }
+    .category-card:nth-child(3) { animation-delay: 0.3s; }
+    .category-card:nth-child(4) { animation-delay: 0.4s; }
+    .category-card:nth-child(5) { animation-delay: 0.5s; }
+    .category-card:nth-child(6) { animation-delay: 0.6s; }
+    .category-card:nth-child(7) { animation-delay: 0.7s; }
+    .category-card:nth-child(8) { animation-delay: 0.8s; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add smooth scroll animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.category-card');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        cards.forEach(card => {
+            card.style.animationPlayState = 'paused';
+            observer.observe(card);
+        });
+    });
+</script>
 {% endblock %}

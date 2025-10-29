@@ -10,11 +10,11 @@ register = template.Library()
 
 @register.filter
 def format_vnd(amount):
-    """Format amount as Vietnamese Dong"""
+    """Format amount as US Dollar (keeping old name for compatibility)"""
     try:
-        return f"{int(float(amount)):,} đ"
+        return f"${float(amount):,.2f}"
     except (ValueError, TypeError):
-        return "0 đ"
+        return "$0.00"
 
 
 @register.filter

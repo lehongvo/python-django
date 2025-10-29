@@ -1,155 +1,194 @@
 {% extends 'store/base.html' %}
 {% load static %}
+{% load store_tags %}
 
-{% block title %}My Account - TechStore 2025{% endblock %}
+{% block title %}My Account - {{ site_name }}{% endblock %}
 
 {% block content %}
-{% if not user %}
+{% if not user.is_authenticated %}
 {% include 'store/account_login.html' %}
 {% else %}
-<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+<!-- Ultra Professional Account Page -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-indigo-50 to-purple-50 py-8 md:py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4">
-                <i class="fas fa-user-circle text-indigo-600 mr-3"></i>
-                My Account
+        <!-- Premium Header with Animation -->
+        <div class="mb-8 md:mb-12 text-center md:text-left animate-fade-in-up">
+            <div class="inline-block mb-4 md:mb-6">
+                <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mx-auto md:mx-0 shadow-2xl animate-float-gentle">
+                    <i class="fas fa-user-circle text-white text-3xl md:text-4xl"></i>
+                </div>
+            </div>
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-2 md:mb-4">
+                <span class="bg-gradient-to-r from-indigo-900 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    My Account
+                </span>
             </h1>
-            <p class="text-gray-600">Manage your profile, orders, and settings</p>
+            <p class="text-base md:text-lg lg:text-xl text-gray-600">Manage your profile, orders, and settings</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Sidebar -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+            <!-- Enhanced Sidebar -->
             <div class="lg:col-span-1">
-                <!-- Profile Card -->
-                <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                    <div class="text-center">
-                        <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-user text-white text-4xl"></i>
+                <!-- Premium Profile Card -->
+                <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-8 mb-6 relative overflow-hidden group animate-fade-in-up animation-delay-300">
+                    <!-- Gradient Background -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5"></div>
+                    
+                    <div class="text-center relative z-10">
+                        <!-- Avatar with Gradient Ring -->
+                        <div class="relative inline-block mb-4 md:mb-6 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-ping opacity-20"></div>
+                            <div class="relative w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-2xl">
+                                <i class="fas fa-user text-white text-4xl md:text-5xl"></i>
+                            </div>
+                            <div class="absolute -bottom-2 -right-2 bg-green-500 border-4 border-white rounded-full w-8 h-8 md:w-10 md:h-10 animate-pulse"></div>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-900">{{ user.get_full_name|default:user.username }}</h3>
-                        <p class="text-gray-600">{{ user.email }}</p>
+                        
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2">{{ user.get_full_name|default:user.username }}</h3>
+                        <p class="text-gray-600 mb-4 text-sm md:text-base">{{ user.email }}</p>
+                        
                         {% if customer %}
-                        <div class="mt-4 text-sm text-gray-600">
-                            <i class="fas fa-phone mr-2"></i>{{ customer.phone|default:"No phone" }}
+                        <div class="mt-4 md:mt-6 text-sm text-gray-600 bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-3 rounded-xl">
+                            <i class="fas fa-phone text-indigo-600 mr-2"></i>{{ customer.phone|default:"No phone" }}
                         </div>
                         {% endif %}
+                        
+                        <!-- Member Since -->
+                        <div class="mt-6 md:mt-8 pt-6 border-t border-gray-200">
+                            <div class="text-xs text-gray-500 mb-2">Member Since</div>
+                            <div class="text-sm font-semibold text-indigo-600">{{ user.date_joined|date:"M Y" }}</div>
+                        </div>
                     </div>
                     
-                    <div class="mt-6 pt-6 border-t border-gray-200">
-                        <a href="{% url 'store:account_orders' %}" class="flex items-center justify-between py-2 text-gray-700 hover:text-indigo-600 transition-colors">
-                            <span><i class="fas fa-shopping-bag mr-2"></i>My Orders</span>
-                            <i class="fas fa-chevron-right text-sm"></i>
+                    <div class="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-gray-200 relative z-10 space-y-2">
+                        <a href="{% url 'store:account_orders' %}" class="flex items-center justify-between py-3 px-4 text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 rounded-xl font-semibold transition-all duration-300 group-hover:scale-105 mb-2">
+                            <span><i class="fas fa-shopping-bag mr-3"></i>My Orders</span>
+                            <i class="fas fa-chevron-right text-sm group-hover:translate-x-1 transition-transform"></i>
                         </a>
-                        <a href="{% url 'store:account_settings' %}" class="flex items-center justify-between py-2 text-gray-700 hover:text-indigo-600 transition-colors">
-                            <span><i class="fas fa-cog mr-2"></i>Settings</span>
-                            <i class="fas fa-chevron-right text-sm"></i>
+                        <a href="{% url 'store:account_settings' %}" class="flex items-center justify-between py-3 px-4 text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-600 rounded-xl font-semibold transition-all duration-300 group-hover:scale-105 mb-2">
+                            <span><i class="fas fa-cog mr-3"></i>Settings</span>
+                            <i class="fas fa-chevron-right text-sm group-hover:translate-x-1 transition-transform"></i>
                         </a>
-                        <a href="{% url 'store:account_addresses' %}" class="flex items-center justify-between py-2 text-gray-700 hover:text-indigo-600 transition-colors">
-                            <span><i class="fas fa-map-marker-alt mr-2"></i>Addresses</span>
-                            <i class="fas fa-chevron-right text-sm"></i>
+                        <a href="{% url 'store:account_addresses' %}" class="flex items-center justify-between py-3 px-4 text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-600 rounded-xl font-semibold transition-all duration-300 group-hover:scale-105 mb-2">
+                            <span><i class="fas fa-map-marker-alt mr-3"></i>Addresses</span>
+                            <i class="fas fa-chevron-right text-sm group-hover:translate-x-1 transition-transform"></i>
                         </a>
-                        <button onclick="logout()" class="w-full flex items-center justify-between py-2 text-red-600 hover:text-red-700 transition-colors">
-                            <span><i class="fas fa-sign-out-alt mr-2"></i>Logout</span>
-                            <i class="fas fa-chevron-right text-sm"></i>
+                        <button onclick="logout()" class="w-full flex items-center justify-between py-3 px-4 text-white bg-gradient-to-r from-red-500 to-pink-600 rounded-xl font-semibold hover:from-red-600 hover:to-pink-700 transition-all duration-300 group-hover:scale-105 shadow-lg">
+                            <span><i class="fas fa-sign-out-alt mr-3"></i>Logout</span>
+                            <i class="fas fa-chevron-right text-sm group-hover:translate-x-1 transition-transform"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="lg:col-span-2">
-                <!-- Quick Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white rounded-2xl shadow-lg p-6">
-                        <div class="flex items-center justify-between">
+            <!-- Enhanced Main Content -->
+            <div class="lg:col-span-2 space-y-6 md:space-y-8">
+                <!-- Premium Quick Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-fade-in-up animation-delay-500">
+                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-6 text-white transform hover:scale-105 transition-all duration-300 group">
+                        <div class="flex items-center justify-between mb-4">
                             <div>
-                                <div class="text-sm text-gray-600 mb-1">Total Orders</div>
-                                <div class="text-3xl font-bold text-gray-900">{{ orders|length }}</div>
+                                <div class="text-xs md:text-sm opacity-90 mb-2">Total Orders</div>
+                                <div class="text-3xl md:text-4xl font-black">{{ orders|length }}</div>
                             </div>
-                            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-shopping-bag text-indigo-600"></i>
+                            <div class="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-all">
+                                <i class="fas fa-shopping-bag text-xl md:text-2xl"></i>
                             </div>
+                        </div>
+                        <div class="text-xs opacity-75">
+                            <i class="fas fa-arrow-up mr-1"></i>All time orders
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-2xl shadow-lg p-6">
-                        <div class="flex items-center justify-between">
+                    <div class="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-6 text-white transform hover:scale-105 transition-all duration-300 group">
+                        <div class="flex items-center justify-between mb-4">
                             <div>
-                                <div class="text-sm text-gray-600 mb-1">Pending Orders</div>
-                                <div class="text-3xl font-bold text-yellow-600">
+                                <div class="text-xs md:text-sm opacity-90 mb-2">Pending Orders</div>
+                                <div class="text-3xl md:text-4xl font-black">
                                     {% for order in orders %}{% if order.status == 'processing' %}1{% endif %}{% empty %}0{% endfor %}
                                 </div>
                             </div>
-                            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-clock text-yellow-600"></i>
+                            <div class="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-all">
+                                <i class="fas fa-clock text-xl md:text-2xl"></i>
                             </div>
+                        </div>
+                        <div class="text-xs opacity-75">
+                            <i class="fas fa-tasks mr-1"></i>In process
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-2xl shadow-lg p-6">
-                        <div class="flex items-center justify-between">
+                    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-6 text-white transform hover:scale-105 transition-all duration-300 group sm:col-span-2 lg:col-span-1">
+                        <div class="flex items-center justify-between mb-4">
                             <div>
-                                <div class="text-sm text-gray-600 mb-1">Account Status</div>
-                                <div class="text-3xl font-bold text-green-600">Active</div>
+                                <div class="text-xs md:text-sm opacity-90 mb-2">Account Status</div>
+                                <div class="text-3xl md:text-4xl font-black">Active</div>
                             </div>
-                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-check-circle text-green-600"></i>
+                            <div class="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-all">
+                                <i class="fas fa-check-circle text-xl md:text-2xl"></i>
                             </div>
+                        </div>
+                        <div class="text-xs opacity-75">
+                            <i class="fas fa-shield-alt mr-1"></i>Verified
                         </div>
                     </div>
                 </div>
 
-                <!-- Recent Orders -->
-                <div class="bg-white rounded-2xl shadow-lg p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">
-                        <i class="fas fa-receipt text-indigo-600 mr-3"></i>
-                        Recent Orders
-                    </h2>
+                <!-- Enhanced Recent Orders -->
+                <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-8 animate-fade-in-up animation-delay-700">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8">
+                        <h2 class="text-2xl md:text-3xl font-black text-gray-900 mb-4 sm:mb-0">
+                            <i class="fas fa-receipt text-indigo-600 mr-3"></i>
+                            Recent Orders
+                        </h2>
+                        <a href="{% url 'store:account_orders' %}" class="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center">
+                            View All
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
                     
                     {% if orders %}
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="border-b border-gray-200">
-                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Order</th>
-                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
-                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                                    <th class="text-right py-3 px-4 font-semibold text-gray-700">Total</th>
-                                    <th class="text-center py-3 px-4 font-semibold text-gray-700">Action</th>
+                    <div class="overflow-x-auto rounded-2xl border border-gray-100">
+                        <table class="w-full min-w-[640px]">
+                            <thead class="bg-gradient-to-r from-indigo-50 to-purple-50">
+                                <tr>
+                                    <th class="text-left py-3 md:py-4 px-4 md:px-6 font-bold text-gray-700 text-sm md:text-base">Order</th>
+                                    <th class="text-left py-3 md:py-4 px-4 md:px-6 font-bold text-gray-700 text-sm md:text-base">Date</th>
+                                    <th class="text-left py-3 md:py-4 px-4 md:px-6 font-bold text-gray-700 text-sm md:text-base">Status</th>
+                                    <th class="text-right py-3 md:py-4 px-4 md:px-6 font-bold text-gray-700 text-sm md:text-base">Total</th>
+                                    <th class="text-center py-3 md:py-4 px-4 md:px-6 font-bold text-gray-700 text-sm md:text-base">Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-gray-100">
                                 {% for order in orders %}
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="py-4 px-4">
-                                        <div class="font-semibold text-gray-900">#{{ order.order_number }}</div>
-                                        <div class="text-sm text-gray-600">{{ order.items.count }} items</div>
+                                <tr class="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300">
+                                    <td class="py-3 md:py-4 px-4 md:px-6">
+                                        <div class="font-bold text-gray-900 text-sm md:text-base">#{{ order.order_number }}</div>
+                                        <div class="text-xs md:text-sm text-gray-600">{{ order.items.count }} items</div>
                                     </td>
-                                    <td class="py-4 px-4 text-gray-700">{{ order.order_date|date:"M d, Y" }}</td>
-                                    <td class="py-4 px-4">
+                                    <td class="py-3 md:py-4 px-4 md:px-6 text-gray-700 text-sm md:text-base font-medium">{{ order.order_date|date:"M d, Y" }}</td>
+                                    <td class="py-3 md:py-4 px-4 md:px-6">
                                         {% if order.status == 'delivered' %}
-                                            <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                            <span class="inline-flex items-center bg-green-100 text-green-800 px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold">
                                                 <i class="fas fa-check-circle mr-2"></i>Delivered
                                             </span>
                                         {% elif order.status == 'shipped' %}
-                                            <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                            <span class="inline-flex items-center bg-blue-100 text-blue-800 px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold">
                                                 <i class="fas fa-shipping-fast mr-2"></i>Shipped
                                             </span>
                                         {% elif order.status == 'processing' %}
-                                            <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                            <span class="inline-flex items-center bg-yellow-100 text-yellow-800 px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold">
                                                 <i class="fas fa-clock mr-2"></i>Processing
                                             </span>
                                         {% else %}
-                                            <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                            <span class="inline-flex items-center bg-gray-100 text-gray-800 px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold">
                                                 {{ order.status|title }}
                                             </span>
                                         {% endif %}
                                     </td>
-                                    <td class="py-4 px-4 text-right font-semibold text-indigo-600">${{ order.total_amount }}</td>
-                                    <td class="py-4 px-4 text-center">
+                                    <td class="py-3 md:py-4 px-4 md:px-6 text-right font-black text-indigo-600 text-base md:text-lg">${{ order.total_amount|floatformat:2 }}</td>
+                                    <td class="py-3 md:py-4 px-4 md:px-6 text-center">
                                         <a href="{% url 'store:order_tracking' %}?order_number={{ order.order_number }}" 
-                                           class="text-indigo-600 hover:text-indigo-700">
+                                           class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all duration-300">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>
@@ -159,11 +198,16 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center py-12 text-gray-500">
-                        <i class="fas fa-receipt text-6xl mb-4"></i>
-                        <p class="text-lg mb-4">No orders yet</p>
-                        <a href="{% url 'store:product_list' %}" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
-                            <i class="fas fa-shopping-bag mr-2"></i>
+                    <div class="text-center py-12 md:py-16">
+                        <div class="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-shopping-bag text-4xl md:text-6xl text-indigo-600"></i>
+                        </div>
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-4">No orders yet</h3>
+                        <p class="text-gray-600 mb-8 max-w-md mx-auto text-sm md:text-base">
+                            Start shopping to see your orders here!
+                        </p>
+                        <a href="{% url 'store:product_list' %}" class="inline-flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl font-bold text-base md:text-lg shadow-2xl hover:shadow-indigo-500/25 transform hover:scale-105 transition-all duration-300">
+                            <i class="fas fa-shopping-bag mr-3"></i>
                             Start Shopping
                         </a>
                     </div>
@@ -174,6 +218,57 @@
     </div>
 </div>
 {% endif %}
+
+<style>
+/* Animations for Account Page */
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes floatGentle {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-float-gentle {
+    animation: floatGentle 4s ease-in-out infinite;
+}
+
+.animation-delay-300 {
+    animation-delay: 0.3s;
+}
+
+.animation-delay-500 {
+    animation-delay: 0.5s;
+}
+
+.animation-delay-700 {
+    animation-delay: 0.7s;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 640px) {
+    .animate-fade-in-up {
+        animation-duration: 0.5s;
+    }
+}
+</style>
 
 <script>
 function logout() {
@@ -196,4 +291,3 @@ function logout() {
 }
 </script>
 {% endblock %}
-

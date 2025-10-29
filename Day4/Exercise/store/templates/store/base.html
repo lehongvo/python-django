@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#6366f1">
     <title>{% block title %}{{ site_name }} - Premium E-commerce{% endblock %}</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -148,6 +149,143 @@
         .stats-card {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
+        }
+        
+        /* Responsive Typography */
+        @media (max-width: 640px) {
+            h1 { font-size: 1.875rem; line-height: 2.25rem; }
+            h2 { font-size: 1.5rem; line-height: 2rem; }
+            h3 { font-size: 1.25rem; line-height: 1.75rem; }
+            .text-hero { font-size: 2rem; line-height: 2.5rem; }
+        }
+        
+        @media (min-width: 641px) and (max-width: 768px) {
+            h1 { font-size: 2.25rem; line-height: 2.5rem; }
+            h2 { font-size: 1.875rem; line-height: 2.25rem; }
+            h3 { font-size: 1.5rem; line-height: 2rem; }
+            .text-hero { font-size: 3rem; line-height: 3.5rem; }
+        }
+        
+        @media (min-width: 769px) {
+            h1 { font-size: 3rem; line-height: 1; }
+            h2 { font-size: 2.25rem; line-height: 2.5rem; }
+            h3 { font-size: 1.875rem; line-height: 2.25rem; }
+            .text-hero { font-size: 4rem; line-height: 1; }
+        }
+        
+        /* Responsive Spacing */
+        @media (max-width: 640px) {
+            .container-mobile { padding: 1rem; }
+            .section-mobile { padding: 2rem 0; }
+        }
+        
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .container-tablet { padding: 2rem; }
+            .section-tablet { padding: 3rem 0; }
+        }
+        
+        @media (min-width: 1025px) {
+            .container-desktop { padding: 3rem; }
+            .section-desktop { padding: 4rem 0; }
+        }
+        
+        /* Touch-Friendly Buttons */
+        @media (max-width: 768px) {
+            button, a.btn, .btn-modern {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+        
+        /* Responsive Images */
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        /* Hide on Small Screens */
+        @media (max-width: 640px) {
+            .hide-mobile { display: none !important; }
+        }
+        
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .hide-tablet { display: none !important; }
+        }
+        
+        @media (min-width: 1025px) {
+            .hide-desktop { display: none !important; }
+        }
+        
+        /* Show only on specific screens */
+        @media (max-width: 640px) {
+            .show-mobile { display: block !important; }
+        }
+        
+        @media (min-width: 641px) {
+            .show-mobile { display: none !important; }
+        }
+        
+        /* Responsive Navigation */
+        @media (max-width: 768px) {
+            .mobile-menu {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 80%;
+                height: 100vh;
+                background: white;
+                transition: left 0.3s ease;
+                z-index: 9999;
+            }
+            
+            .mobile-menu.active {
+                left: 0;
+            }
+        }
+        
+        /* Safe Area for Notches */
+        @supports (padding: max(0px)) {
+            .safe-top {
+                padding-top: max(1rem, env(safe-area-inset-top));
+            }
+            
+            .safe-bottom {
+                padding-bottom: max(1rem, env(safe-area-inset-bottom));
+            }
+            
+            .safe-left {
+                padding-left: max(1rem, env(safe-area-inset-left));
+            }
+            
+            .safe-right {
+                padding-right: max(1rem, env(safe-area-inset-right));
+            }
+        }
+        
+        /* Responsive Tables */
+        @media (max-width: 768px) {
+            .table-responsive {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .table-responsive table {
+                display: table;
+                width: 100%;
+                min-width: 600px;
+            }
+        }
+        
+        /* Touch Targets */
+        @media (max-width: 768px) {
+            a, button {
+                min-height: 44px;
+                padding: 0.5rem 1rem;
+            }
+        }
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 16px;
             padding: 2rem;
@@ -220,74 +358,101 @@
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
-    <nav class="floating-nav">
+    <nav class="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <!-- Top Banner -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm py-2">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-center space-x-6 text-xs">
+                    <span class="flex items-center animate-pulse">
+                        <i class="fas fa-gift mr-2"></i>🎉 New Year Sale - Up to 50% OFF!
+                    </span>
+                    <span class="hidden sm:block">|</span>
+                    <span class="hidden sm:flex items-center">
+                        <i class="fas fa-shipping-fast mr-2"></i>Free shipping on orders over $100
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Navigation -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
                 <div class="flex items-center">
-                    <a href="{% url 'store:home' %}" class="flex items-center space-x-2">
-                        <div class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-store text-white text-sm"></i>
+                    <a href="{% url 'store:home' %}" class="flex items-center space-x-3 group">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <i class="fas fa-store text-white text-lg"></i>
                         </div>
-                        <span class="text-xl font-bold text-gray-900">{{ site_name }}</span>
-                        <span class="text-xs bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-1 rounded-full">{% current_year %}</span>
+                        <div>
+                            <span class="text-xl font-bold text-gray-900">{{ site_name }}</span>
+                            <div class="text-xs text-gray-500">Premium Shopping</div>
+                        </div>
                     </a>
                 </div>
                 
                 <!-- Desktop Navigation -->
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="{% url 'store:home' %}" class="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Home</a>
-                    <a href="{% url 'store:product_list' %}" class="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Products</a>
-                    <a href="{% url 'store:category_list' %}" class="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Categories</a>
-                    {% if nav_categories %}
-                        {% for c in nav_categories %}
-                            <a href="{% url 'store:product_list' %}?category={{ c.slug }}" class="text-gray-500 hover:text-indigo-600 text-sm transition-colors">{{ c.name }}</a>
-                        {% endfor %}
-                    {% endif %}
-                    <a href="{% url 'store:order_tracking' %}" class="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Track Order</a>
+                    <a href="{% url 'store:home' %}" class="nav-link text-gray-600 hover:text-blue-600 text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'home' %}text-blue-600 font-semibold{% endif %}">
+                        <i class="fas fa-home mr-1"></i>Home
+                    </a>
+                    <a href="{% url 'store:product_list' %}" class="nav-link text-gray-600 hover:text-blue-600 text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'product_list' %}text-blue-600 font-semibold{% endif %}">
+                        <i class="fas fa-box mr-1"></i>Products
+                    </a>
+                    <a href="{% url 'store:category_list' %}" class="nav-link text-gray-600 hover:text-blue-600 text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'category_list' %}text-blue-600 font-semibold{% endif %}">
+                        <i class="fas fa-th-large mr-1"></i>Categories
+                    </a>
+                    <a href="{% url 'store:order_tracking' %}" class="nav-link text-gray-600 hover:text-blue-600 text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'order_tracking' %}text-blue-600 font-semibold{% endif %}">
+                        <i class="fas fa-truck mr-1"></i>Track Order
+                    </a>
                 </div>
                 
                 <!-- Right Side -->
                 <div class="flex items-center space-x-4">
                     <!-- Search -->
-                    <form action="{% url 'store:product_list' %}" method="get" class="hidden md:block">
-                        <div class="relative">
+                    <form action="{% url 'store:product_list' %}" method="get" class="hidden lg:block">
+                        <div class="relative group">
                             <input type="text" name="search" placeholder="Search products..." 
-                                   class="w-64 px-4 py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-indigo-600 hover:text-indigo-700">
-                                <i class="fas fa-arrow-right"></i>
+                                   class="w-72 px-4 py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 group-hover:bg-white transition-all duration-300">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-blue-500 transition-colors"></i>
+                            <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs hover:bg-blue-700 transition-colors">
+                                Search
                             </button>
                         </div>
                     </form>
                     
-                    <!-- Cart -->
-                    <a href="{% url 'store:cart' %}" class="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors">
-                        <i class="fas fa-shopping-cart text-lg"></i>
-                        <span class="cart-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ cart_count }}</span>
-                    </a>
-                    
-                    <!-- User Menu -->
-                    <a href="{% url 'store:account' %}" class="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 transition-colors">
-                        <i class="fas fa-user-circle text-lg"></i>
-                        {% if request.user.is_authenticated %}
-                            <span class="hidden md:block font-medium">
-                                {% if request.user.is_staff %}Admin{% else %}{{ request.user.get_username }}{% endif %}
-                            </span>
-                        {% else %}
-                            <span class="hidden md:block font-medium">Account</span>
+                    <!-- Icons Group -->
+                    <div class="flex items-center space-x-4">
+                        <!-- Wishlist -->
+                        <a href="#" class="relative text-gray-600 hover:text-red-500 transition-colors group" onclick="toggleWishlist()">
+                            <i class="fas fa-heart text-lg group-hover:scale-110 transition-transform"></i>
+                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden" id="wishlist-count">0</span>
+                        </a>
+                        
+                        <!-- Cart -->
+                        <a href="{% url 'store:cart' %}" class="relative text-gray-600 hover:text-blue-600 transition-colors group">
+                            <i class="fas fa-shopping-cart text-lg group-hover:scale-110 transition-transform"></i>
+                            {% if cart_count > 0 %}
+                            <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-bounce">{{ cart_count }}</span>
+                            {% endif %}
+                        </a>
+                        
+                        <!-- User Menu -->
+                        <a href="{% url 'store:account' %}" class="text-gray-600 hover:text-blue-600 transition-colors group">
+                            <i class="fas fa-user-circle text-lg group-hover:scale-110 transition-transform"></i>
+                        </a>
+                        
+                        <!-- Admin Link -->
+                        {% if request.user.is_authenticated and request.user.is_staff %}
+                        <a href="/admin/" class="text-gray-600 hover:text-purple-600 transition-colors group">
+                            <i class="fas fa-cog text-lg group-hover:rotate-90 transition-transform"></i>
+                        </a>
                         {% endif %}
-                    </a>
-                    
-                    <!-- Admin Link -->
-                    <a href="/admin/" class="btn-modern text-sm">
-                        <i class="fas fa-cog mr-2"></i>Admin
-                    </a>
-                    
-                    <!-- Mobile Menu Button -->
-                    <button class="md:hidden p-2 text-gray-700 hover:text-indigo-600 transition-colors" onclick="toggleMobileMenu()">
-                        <i class="fas fa-bars text-lg"></i>
-                    </button>
+                        
+                        <!-- Mobile Menu Button -->
+                        <button class="md:hidden text-gray-600 hover:text-blue-600 transition-colors" onclick="toggleMobileMenu()">
+                            <i class="fas fa-bars text-lg"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -318,7 +483,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="pt-16">
+    <main>
         {% block content %}
         {% endblock %}
     </main>
@@ -475,19 +640,84 @@
     
     {% block extra_js %}{% endblock %}
     <script>
+      // Wishlist functionality
+      let wishlistCount = 0;
+      function toggleWishlist() {
+          wishlistCount++;
+          const wishlistElement = document.getElementById('wishlist-count');
+          wishlistElement.textContent = wishlistCount;
+          wishlistElement.classList.remove('hidden');
+          
+          // Show notification
+          showNotification('Added to wishlist! ❤️', 'success');
+      }
+      
+      // Notification system
+      function showNotification(message, type = 'info') {
+          const notification = document.createElement('div');
+          notification.className = `fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-semibold transform translate-x-full transition-transform duration-300 ${
+              type === 'success' ? 'bg-green-500' : 
+              type === 'error' ? 'bg-red-500' : 
+              'bg-blue-500'
+          }`;
+          notification.textContent = message;
+          
+          document.body.appendChild(notification);
+          
+          // Animate in
+          setTimeout(() => {
+              notification.style.transform = 'translateX(0)';
+          }, 100);
+          
+          // Animate out and remove
+          setTimeout(() => {
+              notification.style.transform = 'translateX(100%)';
+              setTimeout(() => {
+                  document.body.removeChild(notification);
+              }, 300);
+          }, 3000);
+      }
+      
       async function quickView(id) {
         try {
+          showNotification('Opening product details...', 'info');
           const res = await fetch(`/api/products/${id}/`, { credentials: 'include' });
           if (!res.ok) throw new Error('Failed');
           const p = await res.json();
-          window.location.href = `/product/${p.slug}/`;
+          setTimeout(() => {
+            window.location.href = `/product/${p.slug}/`;
+          }, 500);
         } catch (e) {
           showNotification('Unable to open quick view', 'error');
         }
       }
+      
       function addToWishlist(id) {
-        showNotification('Added to wishlist (demo)', 'success');
+        toggleWishlist();
       }
+      
+      // Add smooth scrolling and loading effects
+      document.addEventListener('DOMContentLoaded', function() {
+          // Add scroll effect to navbar
+          window.addEventListener('scroll', function() {
+              const nav = document.querySelector('nav');
+              if (window.scrollY > 50) {
+                  nav.classList.add('shadow-lg');
+              } else {
+                  nav.classList.remove('shadow-lg');
+              }
+          });
+          
+          // Add loading animation to links
+          const links = document.querySelectorAll('a[href^="/"]');
+          links.forEach(link => {
+              link.addEventListener('click', function(e) {
+                  if (!this.href.includes('#') && !this.target) {
+                      showNotification('Loading...', 'info');
+                  }
+              });
+          });
+      });
     </script>
     
     <!-- Logout Confirmation Modal -->

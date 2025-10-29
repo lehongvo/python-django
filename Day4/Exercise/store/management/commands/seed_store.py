@@ -22,6 +22,30 @@ NOUNS = (
     "Printer", "SSD", "HDD", "Microphone",
 )
 
+# Category-specific product names for better image matching
+CATEGORY_PRODUCTS = {
+    "Electronics": ["Headphones", "Speaker", "Camera", "Drone", "Microphone"],
+    "Computers & Laptops": ["Laptop", "Keyboard", "Mouse", "Monitor", "SSD", "HDD"],
+    "Phones & Accessories": ["Phone", "Watch", "Headphones"],
+    "Home & Kitchen": ["Vacuum", "Toothbrush", "Mixer", "Kettle", "Projector"],
+    "Appliances": ["Vacuum", "Mixer", "Kettle", "Printer"],
+    "Sports & Fitness": ["Watch", "Headphones"],
+    "Beauty & Personal Care": ["Toothbrush", "Watch"],
+    "Health & Wellness": ["Toothbrush", "Watch"],
+    "Office & Stationery": ["Printer", "Keyboard", "Mouse"],
+}
+
+# Unsplash image IDs for different product types
+PRODUCT_IMAGES = {
+    "Headphones": "headphone", "Speaker": "speaker", "Laptop": "laptop", 
+    "Phone": "smartphone", "Watch": "watch", "Monitor": "monitor",
+    "Camera": "camera", "Router": "router", "Keyboard": "keyboard",
+    "Mouse": "mouse", "Drone": "drone", "Vacuum": "vacuum",
+    "Toothbrush": "toothbrush", "Mixer": "mixer", "Kettle": "kettle",
+    "Projector": "projector", "Printer": "printer", "SSD": "ssd",
+    "HDD": "hard drive", "Microphone": "microphone",
+}
+
 DESCRIPTIONS = (
     "Premium performance with modern design.",
     "Engineered for speed, reliability, and comfort.",
@@ -33,12 +57,39 @@ DESCRIPTIONS = (
 )
 
 
-def random_name() -> str:
-    return f"{random.choice(WORDS)} {random.choice(WORDS)} {random.choice(NOUNS)}".replace("  ", " ")
+def random_name(category_name=None) -> str:
+    """Generate a random product name, optionally matching category products."""
+    word1 = random.choice(WORDS)
+    word2 = random.choice(WORDS)
+    
+    # Use category-specific products if available
+    if category_name and category_name in CATEGORY_PRODUCTS:
+        noun = random.choice(CATEGORY_PRODUCTS[category_name])
+    else:
+        noun = random.choice(NOUNS)
+    
+    # Avoid repeated words
+    if word1 == word2:
+        word2 = random.choice([w for w in WORDS if w != word1])
+    
+    return f"{word1} {word2} {noun}".replace("  ", " ")
 
 
 def random_sentence() -> str:
     return f"{random.choice(DESCRIPTIONS)} {random.choice(DESCRIPTIONS)}"
+
+
+def get_product_image_url(product_name):
+    """Get a relevant Unsplash image URL for a product name."""
+    # Extract the last word (the product type)
+    words = product_name.split()
+    product_type = words[-1] if words else "product"
+    
+    # Check if we have a specific image for this product type
+    search_term = PRODUCT_IMAGES.get(product_type, product_type.lower())
+    
+    # Use Unsplash Source API for better product-specific images
+    return f"https://source.unsplash.com/800x600/?{search_term}"
 
 
 def unique_slug(base: str) -> str:
@@ -133,11 +184,11 @@ class Command(BaseCommand):
         # Products
         created = 0
         for i in range(num_products):
-            name = random_name()
+            category = random.choice(categories)
+            name = random_name(category.name)
             price = round(random.uniform(9.99, 2499.99), 2)
             compare_price = price + round(random.uniform(0, 500), 2) if random.random() < 0.35 else None
             stock = random.randint(0, 200)
-            category = random.choice(categories)
 
             slug = unique_slug(name)
             unique_sku = (slug.replace('-', '').upper()[:8] + '-' + ''.join(random.choices(string.digits, k=8)))
@@ -163,27 +214,29 @@ class Command(BaseCommand):
                     product.tags.add(*chosen)
                 created += 1
 
-                # optionally attach a real image
+                # optionally attach a real image matching the product type
                 if with_images and not getattr(product, 'image', None):
                     try:
-                        img_url = f"https://picsum.photos/seed/{slug}/800/600"
-                        resp = requests.get(img_url, timeout=10)
+                        # Use product-specific image URL
+                        img_url = get_product_image_url(product.name)
+                        resp = requests.get(img_url, timeout=15)
                         if resp.status_code == 200:
                             product.image.save(f"{slug}.jpg", ContentFile(resp.content), save=True)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.stdout.write(self.style.WARNING(f"  → Could not download image for {product.name}: {e}"))
 
         # Backfill images for existing products without images
         if with_images:
             missing = Product.objects.filter(image="") | Product.objects.filter(image__isnull=True)
             for p in missing:
                 try:
-                    s = p.slug or unique_slug(p.name)
-                    img_url = f"https://picsum.photos/seed/{s}/800/600"
-                    resp = requests.get(img_url, timeout=10)
+                    # Use product-specific image URL
+                    img_url = get_product_image_url(p.name)
+                    resp = requests.get(img_url, timeout=15)
                     if resp.status_code == 200:
-                        p.image.save(f"{s}.jpg", ContentFile(resp.content), save=True)
-                except Exception:
+                        p.image.save(f"{p.slug}.jpg", ContentFile(resp.content), save=True)
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f"  → Could not download image for {p.name}: {e}"))
                     continue
 
             if (i + 1) % 250 == 0:

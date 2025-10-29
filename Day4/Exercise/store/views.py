@@ -4,13 +4,29 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.forms import UserCreationForm
 from .models import Product, Category, Tag, Order, OrderItem, Customer
-from django.db.models import Q
+from django.db.models import Q, F, Case, When, Value, FloatField, ExpressionWrapper
 
 
 def home(request):
     """Homepage with featured products"""
-    featured_products = Product.objects.filter(is_featured=True, status='published')[:6]
+    # Order by dynamic discount percentage (computed from compare_price and price), then featured
     from django.core.paginator import Paginator
+    computed_discount_expr = Case(
+        When(
+            compare_price__gt=F('price'),
+            then=ExpressionWrapper(
+                (F('compare_price') - F('price')) * 100.0 / F('compare_price'),
+                output_field=FloatField(),
+            ),
+        ),
+        default=Value(0.0),
+        output_field=FloatField(),
+    )
+    featured_products = (
+        Product.objects.filter(status='published')
+        .annotate(computed_discount_percent=computed_discount_expr)
+        .order_by('-computed_discount_percent', '-is_featured')[:6]
+    )
     try:
         cat_limit = int(request.GET.get('cat_limit', 6))
     except ValueError:
@@ -42,9 +58,9 @@ def product_list(request):
     category_slug = request.GET.get('category')
     if category_slug:
         products = products.filter(category__slug=category_slug)
-        category = get_object_or_404(Category, slug=category_slug)
+        current_category_obj = get_object_or_404(Category, slug=category_slug)
     else:
-        category = None
+        current_category_obj = None
     
     # Search
     search_query = request.GET.get('search')
@@ -89,7 +105,8 @@ def product_list(request):
     context = {
         'products': products,
         'categories': categories,
-        'current_category': category,
+        'current_category': category_slug,  # Pass slug instead of object
+        'current_category_obj': current_category_obj,  # Keep object for other uses
         'search_query': search_query,
         'sort_by': sort_by,
         'paginator': paginator,
@@ -118,10 +135,34 @@ def product_detail(request, slug):
 
 
 def category_list(request):
-    """List all categories"""
-    categories = Category.objects.filter(is_active=True)
+    """List all categories with pagination"""
+    from django.core.paginator import Paginator
+    
+    # Get all active categories
+    categories_qs = Category.objects.filter(is_active=True).order_by('name')
+    
+    # Pagination
+    try:
+        limit = int(request.GET.get('limit', 12))
+    except ValueError:
+        limit = 12
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        page = 1
+    
+    paginator = Paginator(categories_qs, max(1, min(limit, 24)))
+    page_obj = paginator.get_page(page)
+    categories = page_obj.object_list
+    
     context = {
         'categories': categories,
+        'paginator': paginator,
+        'page_obj': page_obj,
+        'limit': limit,
+        'limits': [6, 9, 12, 15, 18, 21, 24],
+        'page': page,
+        'total_count': paginator.count,
     }
     return render(request, 'store/category_list.html', context)
 
