@@ -2,9 +2,21 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, authenticate, login
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
-from .models import Product, Category, Tag, Order, OrderItem, Customer
+from .models import Product, Category, Tag, Order, OrderItem, Customer, Subscriber
 from django.db.models import Q, F, Case, When, Value, FloatField, ExpressionWrapper
+from django.http import JsonResponse
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils import timezone
+from django.core.mail import send_mail
+import random
+from datetime import timedelta
+from .models import EmailOTP
 
 
 def home(request):
@@ -308,12 +320,37 @@ def user_login(request):
         if user is not None:
             login(request, user)
             messages.success(request, f'Welcome back, {username}!')
-            
-            # Redirect to next page if specified
-            next_url = request.GET.get('next')
-            if next_url:
-                return redirect(next_url)
-            return redirect('store:account')
+
+            # Issue JWT tokens and set cookies
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            next_url = request.GET.get('next') or 'store:account'
+            response = redirect(next_url)
+
+            secure_flag = not settings.DEBUG
+            # access cookie ~1 hour
+            response.set_cookie(
+                'access_token',
+                access_token,
+                max_age=60 * 60,
+                httponly=True,
+                secure=secure_flag,
+                samesite='Lax',
+                path='/',
+            )
+            # refresh cookie ~7 days
+            response.set_cookie(
+                'refresh_token',
+                refresh_token,
+                max_age=7 * 24 * 60 * 60,
+                httponly=True,
+                secure=secure_flag,
+                samesite='Lax',
+                path='/',
+            )
+            return response
         else:
             messages.error(request, 'Invalid username or password.')
     
@@ -322,35 +359,133 @@ def user_login(request):
 
 
 def register(request):
-    """User registration page"""
+    """Two-step registration requiring email OTP verification."""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            
-            # Create customer record
-            customer = Customer.objects.create(
-                name=user.username,
-                email=user.email if user.email else f"{user.username}@example.com",
-            )
-            
-            # Auto login after registration
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password1')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                messages.success(request, f'Welcome! Your account has been created, {username}!')
-                return redirect('store:account')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = UserCreationForm()
-    
-    context = {
-        'form': form,
-    }
-    return render(request, 'store/register.html', context)
+        step = request.POST.get('step', 'request_otp')
+        email = request.POST.get('email', '').strip().lower()
+        username = request.POST.get('username', '').strip()
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
+
+        if step == 'request_otp':
+            if not email:
+                messages.error(request, 'Email is required.')
+            else:
+                # Ensure email not already used by a user/customer
+                from django.contrib.auth.models import User
+                if User.objects.filter(email=email).exists() or Customer.objects.filter(email=email).exists():
+                    messages.error(request, 'Email is already in use.')
+                else:
+                    # Create OTP
+                    code = f"{random.randint(100000, 999999)}"
+                    expires_at = timezone.now() + timedelta(minutes=10)
+                    EmailOTP.objects.create(email=email, code=code, expires_at=expires_at)
+                    # Send OTP via email
+                    try:
+                        from django.conf import settings as dj_settings
+                        send_mail(
+                            subject='Your verification code',
+                            message=f'Your OTP code is: {code}. It expires in 10 minutes.',
+                            from_email=dj_settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=[email],
+                            fail_silently=False,
+                        )
+                    except Exception as e:
+                        messages.error(request, f"Failed to send OTP email: {e}")
+                    messages.success(request, 'OTP sent to your email. Please check your inbox.')
+                    context = {
+                        'prefill_email': email,
+                        'step': 'verify_otp',
+                    }
+                    # In development, also show OTP to unblock testing
+                    try:
+                        from django.conf import settings as dj_settings
+                        # Only show OTP inline when using console email backend in development
+                        if dj_settings.DEBUG and str(dj_settings.EMAIL_BACKEND).endswith('console.EmailBackend'):
+                            context['dev_otp'] = code
+                    except Exception:
+                        pass
+                    return render(request, 'store/register.html', context)
+
+        elif step == 'verify_otp':
+            otp = request.POST.get('otp', '').strip()
+            if not (email and otp and username and password1 and password2):
+                messages.error(request, 'All fields are required.')
+                return render(request, 'store/register.html', {
+                    'prefill_email': email,
+                    'step': 'verify_otp',
+                    'prefill_username': username,
+                })
+            elif password1 != password2:
+                messages.error(request, 'Passwords do not match.')
+                return render(request, 'store/register.html', {
+                    'prefill_email': email,
+                    'step': 'verify_otp',
+                    'prefill_username': username,
+                })
+            elif not (otp.isdigit() and len(otp) == 6):
+                messages.error(request, 'OTP must be 6 digits.')
+                return render(request, 'store/register.html', {
+                    'prefill_email': email,
+                    'step': 'verify_otp',
+                    'prefill_username': username,
+                })
+            else:
+                # Validate OTP: accept any unexpired, unused code for this email
+                now = timezone.now()
+                otp_qs = EmailOTP.objects.filter(email=email, is_used=False, expires_at__gt=now)
+                record = otp_qs.filter(code=otp).order_by('-created_at').first()
+                if not record:
+                    messages.error(request, 'OTP not found. Please request a new code.')
+                    return render(request, 'store/register.html', {
+                        'prefill_email': email,
+                        'step': 'verify_otp',
+                        'prefill_username': username,
+                    })
+                else:
+                    # OTP valid → continue account creation
+                        # Complete registration
+                        from django.contrib.auth.models import User
+                        if User.objects.filter(username=username).exists():
+                            messages.error(request, 'Username already exists.')
+                            return render(request, 'store/register.html', {
+                                'prefill_email': email,
+                                'step': 'verify_otp',
+                                'prefill_username': username,
+                            })
+                        elif User.objects.filter(email=email).exists():
+                            messages.error(request, 'Email is already in use.')
+                            return render(request, 'store/register.html', {
+                                'prefill_email': email,
+                                'step': 'verify_otp',
+                                'prefill_username': username,
+                            })
+
+                        created_user = User.objects.create_user(username=username, email=email, password=password1)
+                        Customer.objects.update_or_create(
+                            email=email,
+                            defaults={
+                                'user': created_user,
+                                'name': created_user.get_full_name() or username,
+                                'phone': '', 'address': '', 'city': '', 'state': '', 'postal_code': '', 'country': 'USA'
+                            },
+                        )
+                        record.is_used = True
+                        record.save(update_fields=['is_used'])
+
+                        # Success: inform user and redirect to Login (require explicit login)
+                        messages.success(request, 'Your account has been created successfully. Please log in to continue.')
+                        return redirect('store:user_login')
+
+        # On any validation error, fall through and re-render appropriate step
+        return render(request, 'store/register.html', {
+            'prefill_email': email,
+            'step': 'verify_otp' if request.POST.get('step') == 'verify_otp' else 'request_otp',
+            'prefill_username': username,
+        })
+
+    # GET: show initial step to request OTP
+    return render(request, 'store/register.html', {'step': 'request_otp'})
 
 
 def account(request):
@@ -513,7 +648,11 @@ def logout_view(request):
     """Logout user"""
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
-    return redirect('store:home')
+    response = redirect('store:home')
+    # Clear JWT cookies
+    response.delete_cookie('access_token', path='/')
+    response.delete_cookie('refresh_token', path='/')
+    return response
 
 
 def order_tracking(request):
@@ -551,3 +690,35 @@ def shipping_info(request):
 
 def returns_policy(request):
     return render(request, 'store/support_returns.html')
+
+
+def subscribe(request):
+    """Subscribe to newsletter via AJAX."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+
+    email = request.POST.get('email') or (request.headers.get('Content-Type','').startswith('application/json') and __import__('json').loads(request.body or '{}').get('email'))
+    if not email:
+        return JsonResponse({'error': 'Email is required'}, status=400)
+    try:
+        validate_email(email)
+    except ValidationError:
+        return JsonResponse({'error': 'Invalid email'}, status=400)
+
+    sub, created = Subscriber.objects.get_or_create(email=email)
+    # Send welcome email (HTML + text)
+    try:
+        context = {
+            'email': email,
+            'site_name': 'TechStore 2025',
+        }
+        subject = 'Welcome to TechStore — Exclusive Deals Are Coming Your Way!'
+        text_body = render_to_string('emails/subscribed.txt', context)
+        html_body = render_to_string('emails/subscribed.html', context)
+        msg = EmailMultiAlternatives(subject, text_body, to=[email])
+        msg.attach_alternative(html_body, 'text/html')
+        msg.send(fail_silently=True)
+    except Exception:
+        pass
+
+    return JsonResponse({'message': 'Subscribed successfully' if created else 'You are already subscribed'})

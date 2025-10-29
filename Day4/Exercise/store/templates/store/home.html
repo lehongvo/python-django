@@ -25,7 +25,7 @@
                     Shop the Best
                     <br><span class="bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">Premium Products</span>
                     <br>Online
-                </h1>
+            </h1>
                 
                 <p class="text-xl md:text-2xl text-gray-100 max-w-2xl">
                     Discover exceptional quality products with unbeatable prices. 
@@ -60,10 +60,10 @@
                             <div class="font-bold text-lg">Secure Payment</div>
                             <div class="text-sm text-gray-200">SSL encrypted</div>
                         </div>
-                    </div>
-                </div>
             </div>
-            
+        </div>
+    </div>
+    
             <!-- Right - Featured Product Carousel -->
             {% if featured_products %}
             <div class="relative">
@@ -93,6 +93,9 @@
                                         <a href="{% url 'store:product_detail' product.slug %}" class="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors">
                                             <i class="fas fa-eye mr-1"></i>Quick View
                                         </a>
+                                        <button type="button" onclick="addToCart({{ product.id }})" class="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                                            <i class="fas fa-shopping-cart mr-1"></i>Add
+                                        </button>
                                         <button type="button" data-product-id="{{ product.id }}" class="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors add-to-wishlist-btn">
                                             <i class="fas fa-heart mr-1"></i>Wishlist
                                         </button>
@@ -130,9 +133,9 @@
                         {% endfor %}
                     </div>
                 </div>
-            </div>
+    </div>
             {% endif %}
-        </div>
+    </div>
     </div>
 </section>
 
@@ -265,7 +268,7 @@
                             <i class="fas fa-eye mr-2"></i>View Details
                         </a>
                         {% if product.is_in_stock %}
-                        <button class="bg-green-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors">
+                        <button class="bg-green-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors" onclick="addToCart({{ product.id }})">
                             <i class="fas fa-shopping-cart"></i>
                         </button>
                         {% else %}
@@ -494,7 +497,7 @@
                                 class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-blue-500/50 transform hover:scale-[1.02] flex items-center justify-center gap-2">
                                 <span>Subscribe Now</span>
                                 <i class="fas fa-arrow-right"></i>
-                            </button>
+                </button>
                             
                             <div id="newsletter-message" class="text-center"></div>
                             
@@ -503,7 +506,7 @@
                                 We respect your privacy. Unsubscribe at any time.
                             </p>
                         </div>
-                    </form>
+            </form>
                 </div>
             </div>
         </div>
@@ -511,6 +514,21 @@
 </section>
 
 <script>
+// Get cookie (for CSRF)
+function getCookie(name){
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 // Wishlist Buttons
 document.addEventListener('DOMContentLoaded', function() {
     const wishlistButtons = document.querySelectorAll('.add-to-wishlist-btn');
@@ -553,19 +571,29 @@ document.getElementById('newsletter-form').addEventListener('submit', function(e
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Subscribing...';
     
-    // Simulate subscription
-    setTimeout(() => {
-        messageDiv.innerHTML = '<div class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-check-circle mr-2"></i>Thanks for subscribing! Check your email for updates.</div>';
-        document.getElementById('newsletter-email').value = '';
-        emailInput.classList.remove('border-red-500', 'border-green-500');
+    // Submit to backend
+    fetch('/subscribe/', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: new URLSearchParams({ email })
+    }).then(async (res) => {
+        const data = await res.json().catch(()=>({}));
+        if (res.ok) {
+            messageDiv.innerHTML = '<div class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-check-circle mr-2"></i>' + (data.message || 'Thanks for subscribing!') + '</div>';
+            document.getElementById('newsletter-email').value = '';
+        } else {
+            messageDiv.innerHTML = '<div class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-exclamation-circle mr-2"></i>' + (data.error || 'Subscription failed') + '</div>';
+        }
+    }).catch(() => {
+        messageDiv.innerHTML = '<div class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-exclamation-circle mr-2"></i>Subscription failed. Please try again later.</div>';
+    }).finally(()=>{
         button.disabled = false;
-        button.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Subscribe';
-        
-        // Clear message after 5 seconds
-        setTimeout(() => {
-            messageDiv.innerHTML = '';
-        }, 5000);
-    }, 1000);
+        button.innerHTML = '<span>Subscribe Now</span><i class="fas fa-arrow-right"></i>';
+        setTimeout(()=>{ messageDiv.innerHTML=''; }, 5000);
+    });
 });
 
 // Real-time email validation

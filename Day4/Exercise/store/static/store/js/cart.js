@@ -218,17 +218,50 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-add-to-cart]').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             const productId = this.dataset.productId;
             const quantity = parseInt(this.dataset.quantity) || 1;
             
             // Show loading state
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
+            const self = this;
+            // Failsafe: ensure the button always resets after a short delay
+            setTimeout(() => {
+                if (self.disabled) {
+                    self.disabled = false;
+                    self.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add';
+                }
+            }, 4000);
             
-            addToCart(productId, quantity).then(() => {
-                this.disabled = false;
-                this.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add to Cart';
-            });
+            const adder = (typeof window.addToCart === 'function')
+                ? window.addToCart(productId, quantity)
+                : (async function(){
+                    const res = await fetch('/api/cart/add/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ product_id: productId, quantity })
+                    });
+                    if (res.ok) {
+                        await Cart.add(productId, quantity);
+                        showNotification('Product added to cart successfully!', 'success');
+                    }
+                })();
+
+            Promise.resolve(adder)
+                .then(() => {
+                    // Guarantee a follow-up sync like on Home page
+                    return Cart.updateCount();
+                })
+                .catch(() => {})
+                .finally(() => {
+                    self.disabled = false;
+                    self.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add';
+                });
         });
     });
     

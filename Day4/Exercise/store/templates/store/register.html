@@ -12,7 +12,12 @@
                     <i class="fas fa-user-plus text-white text-2xl"></i>
                 </div>
                 <h2 class="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
-                <p class="text-gray-600">Join TechStore today and start shopping</p>
+                <p class="text-gray-600">One minute to join the community</p>
+                <div class="flex items-center justify-center gap-2 mt-3 text-xs text-gray-500">
+                    <span class="px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 font-semibold">1. Verify Email</span>
+                    <span>›</span>
+                    <span class="px-2 py-1 rounded-full bg-gray-100">2. Set Credentials</span>
+                </div>
             </div>
 
             {% if messages %}
@@ -25,49 +30,124 @@
             
             <form method="post" class="space-y-6">
                 {% csrf_token %}
-                
-                <div>
-                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Username
-                    </label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <div class="text-red-600 text-sm mt-1">
-                            {{ form.username.errors }}
-                        </div>
+                {% if step == 'verify_otp' %}
+                    <input type="hidden" name="step" value="verify_otp" />
+                    {% if dev_otp %}
+                    <div class="p-3 rounded-xl mb-4 bg-yellow-50 text-yellow-800 text-sm">
+                        Dev mode: Your OTP is <span class="font-bold">{{ dev_otp }}</span>
+                    </div>
                     {% endif %}
-                </div>
-                
-                <div>
-                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Password
-                    </label>
-                    {{ form.password1 }}
-                    {% if form.password1.errors %}
-                        <div class="text-red-600 text-sm mt-1">
-                            {{ form.password1.errors }}
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                        <input type="email" name="email" required value="{{ prefill_email }}" readonly class="bg-gray-100" />
+                        <p class="text-xs text-gray-500 mt-1">We sent a 6-digit code to this email.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">OTP Code</label>
+                        <div class="flex gap-2" x-data="{code:['','','','','','']}">
+                            <input name="otp" type="text" inputmode="numeric" pattern="\\d{6}" maxlength="6" class="sr-only" aria-hidden="true">
+                            <template x-for="(v,i) in [0,1,2,3,4,5]">
+                                <input class="w-12 h-12 text-center border-2 rounded-xl focus:border-indigo-500 focus:ring-0" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,''); const hidden=this.form.querySelector('[name=otp]'); const boxes=[...this.parentElement.querySelectorAll('input:not([name=otp])')]; hidden.value=boxes.map(b=>b.value||'').join(''); if(this.value && this.nextElementSibling){this.nextElementSibling.focus();}"
+                                    onkeydown="if(event.key==='Backspace' && !this.value && this.previousElementSibling){this.previousElementSibling.focus();}">
+                            </template>
                         </div>
-                    {% endif %}
-                    <p class="text-xs text-gray-500 mt-1">Your password must contain at least 8 characters.</p>
-                </div>
-                
-                <div>
-                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Confirm Password
-                    </label>
-                    {{ form.password2 }}
-                    {% if form.password2.errors %}
-                        <div class="text-red-600 text-sm mt-1">
-                            {{ form.password2.errors }}
+                        <p class="text-xs text-gray-500 mt-2">Enter the 6 digits from your email.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                        <input type="text" name="username" required value="{{ prefill_username }}" placeholder="Choose a username" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                        <div class="relative">
+                            <input type="password" id="reg_pass" name="password1" required placeholder="Create a password" />
+                            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" onclick="const i=document.getElementById('reg_pass'); i.type=i.type==='password'?'text':'password'">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
-                    {% endif %}
-                </div>
-                
-                <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Create Account
-                </button>
+                        <div class="mt-2 h-1 rounded bg-gray-200 overflow-hidden">
+                            <div id="strength" class="h-1 w-0 bg-red-500 transition-all"></div>
+                        </div>
+                        <p id="strengthText" class="text-xs text-gray-500 mt-1">Minimum 8 characters recommended.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+                        <div class="relative">
+                            <input type="password" id="reg_pass2" name="password2" required placeholder="Confirm password" />
+                            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" onclick="const i=document.getElementById('reg_pass2'); i.type=i.type==='password'?'text':'password'">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <label class="inline-flex items-center text-xs text-gray-600 mb-3">
+                        <input type="checkbox" required class="mr-2 rounded border-gray-300"> I agree to the Terms & Privacy Policy
+                    </label>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow">
+                        <i class="fas fa-check mr-2"></i>
+                        Verify & Create Account
+                    </button>
+                {% else %}
+                    <input type="hidden" name="step" value="request_otp" />
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                        <input type="email" name="email" required value="{{ prefill_email }}" placeholder="Enter your email" />
+                        <p class="text-xs text-gray-500 mt-1">We will email you a 6-digit verification code.</p>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Send OTP
+                    </button>
+                {% endif %}
             </form>
+
+            {% if step == 'verify_otp' %}
+            <div class="mt-4 text-center">
+                <form method="post" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="step" value="request_otp" />
+                    <input type="hidden" name="email" value="{{ prefill_email }}" />
+                    <button class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold" type="submit">
+                        Resend OTP
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="mt-6">
+                <div class="flex items-center">
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                    <span class="px-3 text-xs text-gray-400">or sign up with</span>
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-3">
+                    <a href="{% url 'social:begin' 'google-oauth2' %}" class="w-full border rounded-xl py-2.5 text-center hover:bg-gray-50"><i class="fab fa-google mr-2 text-red-500"></i>Google</a>
+                    <a href="{% url 'social:begin' 'facebook' %}" class="w-full border rounded-xl py-2.5 text-center hover:bg-gray-50"><i class="fab fa-facebook mr-2 text-blue-600"></i>Facebook</a>
+                </div>
+            </div>
+
+            {% block extra_js %}
+            <script>
+              const pass = document.getElementById('reg_pass');
+              if (pass) {
+                pass.addEventListener('input', function(){
+                  const v = this.value;
+                  const s = document.getElementById('strength');
+                  const t = document.getElementById('strengthText');
+                  let score = 0;
+                  if (v.length >= 8) score++;
+                  if (/[A-Z]/.test(v)) score++;
+                  if (/[0-9]/.test(v)) score++;
+                  if (/[^A-Za-z0-9]/.test(v)) score++;
+                  const width = ['0%','25%','50%','75%','100%'][score];
+                  s.style.width = width;
+                  const colors = ['bg-red-500','bg-orange-500','bg-yellow-500','bg-green-500'];
+                  s.className = 'h-1 transition-all ' + (score<=1? 'bg-red-500': score==2? 'bg-orange-500': score==3? 'bg-yellow-500':'bg-green-500');
+                  t.textContent = score<=1 ? 'Weak password' : score==2 ? 'Fair password' : score==3 ? 'Good password' : 'Strong password';
+                });
+              }
+            </script>
+            {% endblock %}
             
             <div class="mt-6 text-center text-sm text-gray-600">
                 <p>Already have an account?</p>

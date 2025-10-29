@@ -1,0 +1,7 @@
+Thanks for subscribing to {{ site_name }}!
+
+You'll be the first to know about limited-time deals, new product launches and members-only promotions.
+
+Visit our store to explore the latest arrivals: http://localhost:8001/
+
+You’re receiving this email because you opted in on our website. Unsubscribe anytime.

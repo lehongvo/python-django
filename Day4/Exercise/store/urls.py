@@ -23,6 +23,7 @@ urlpatterns = [
     path('support/contact/', views.contact_us, name='contact_us'),
     path('support/shipping/', views.shipping_info, name='shipping_info'),
     path('support/returns/', views.returns_policy, name='returns_policy'),
+    path('subscribe/', views.subscribe, name='subscribe'),
 ]
 
 

@@ -1,6 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action, authentication_classes, permission_classes
 from rest_framework.authentication import SessionAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .authentication import CookieJWTAuthentication
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.shortcuts import get_object_or_404
@@ -109,6 +111,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     """Category API ViewSet"""
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     queryset = Category.objects.filter(is_active=True)
     
     @action(detail=True, methods=['get'])
@@ -121,7 +124,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['POST'])
-@authentication_classes([SessionAuthentication])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
 def add_to_cart(request):
     """Add product to shopping cart"""
     # Check if user is authenticated
@@ -183,7 +186,7 @@ def add_to_cart(request):
 
 
 @api_view(['POST'])
-@authentication_classes([SessionAuthentication])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
 def buy_now(request):
     """Buy product immediately"""
     # Check if user is authenticated
@@ -246,7 +249,7 @@ def order_detail(request, order_number):
 
 
 @api_view(['POST'])
-@authentication_classes([SessionAuthentication])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
 def cart_sync(request):
     """Sync cart from localStorage to database"""
     if not request.user.is_authenticated:
@@ -280,7 +283,7 @@ def cart_sync(request):
 
 
 @api_view(['POST'])
-@authentication_classes([SessionAuthentication])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
 def cart_clear(request):
     """Clear cart for logged out user"""
     # Clear localStorage on client
@@ -288,11 +291,16 @@ def cart_clear(request):
 
 
 @api_view(['GET'])
-@authentication_classes([SessionAuthentication])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
 def cart_list(request):
     """Return current user's cart items from database"""
     if not request.user.is_authenticated:
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+        # For unauthenticated users, return empty cart gracefully
+        return Response({
+            'items': [],
+            'count': 0,
+            'subtotal': 0.0,
+        })
 
     customer = _get_or_create_customer_for_user(request.user)
 
@@ -320,7 +328,7 @@ def cart_list(request):
 
 
 @api_view(['POST'])
-@authentication_classes([SessionAuthentication])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
 def cart_update(request):
     """Set quantity for a cart item in DB (add/update/remove)."""
     if not request.user.is_authenticated:
@@ -351,7 +359,7 @@ def cart_update(request):
 
 
 @api_view(['POST'])
-@authentication_classes([SessionAuthentication])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
 def cart_remove(request):
     """Remove an item from the cart in DB."""
     if not request.user.is_authenticated:

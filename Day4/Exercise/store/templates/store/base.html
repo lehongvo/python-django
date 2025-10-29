@@ -352,6 +352,30 @@
         .notification.show {
             transform: translateX(0);
         }
+
+        /* UI polish for product cards */
+        .product-card .product-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .product-card .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 44px;
+            padding: 0 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all .2s ease;
+        }
+        .product-card .btn-primary { background:#4f46e5; color:#fff; }
+        .product-card .btn-primary:hover { background:#4338ca; transform: translateY(-1px); }
+        .product-card .btn-outline { background:#fff; color:#111827; border:1px solid #e5e7eb; }
+        .product-card .btn-outline:hover { background:#f9fafb; }
+        .product-card .price-row{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+        .product-card .price-row .current{ font-weight:800; color:#111827; }
+        .product-card .price-row .compare{ color:#6b7280; text-decoration: line-through; }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -410,14 +434,24 @@
                 <div class="flex items-center space-x-4">
                     <!-- Search -->
                     <form action="{% url 'store:product_list' %}" method="get" class="hidden lg:block">
-                        <div class="relative group">
-                            <input type="text" name="search" placeholder="Search products..." 
-                                   class="w-72 px-4 py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 group-hover:bg-white transition-all duration-300">
-                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-blue-500 transition-colors"></i>
-                            <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs hover:bg-blue-700 transition-colors">
-                                Search
-                            </button>
+                        <div class="relative group flex items-center bg-white rounded-full border border-gray-200 shadow-sm overflow-hidden">
+                            <div class="pl-4 text-gray-400"><i class="fas fa-search"></i></div>
+                            <input type="text" name="search" placeholder="Search for phones, laptops, printers..." 
+                                   class="w-72 px-3 py-2 text-sm focus:outline-none" list="search_suggestions">
+                            <select name="category" class="px-3 py-2 text-sm border-l bg-gray-50 focus:outline-none">
+                                <option value="">All</option>
+                                {% for cat in navigation_categories %}
+                                <option value="{{ cat.slug }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="ml-auto bg-indigo-600 text-white px-4 py-2 text-sm font-semibold hover:bg-indigo-700 transition-colors">Search</button>
                         </div>
+                        <datalist id="search_suggestions">
+                            <option value="iPhone"></option>
+                            <option value="Macbook"></option>
+                            <option value="Printer"></option>
+                            <option value="Router"></option>
+                        </datalist>
                     </form>
                     
                     <!-- Icons Group -->
@@ -431,9 +465,7 @@
                         <!-- Cart -->
                         <a href="{% url 'store:cart' %}" class="relative text-gray-600 hover:text-blue-600 transition-colors group">
                             <i class="fas fa-shopping-cart text-lg group-hover:scale-110 transition-transform"></i>
-                            {% if cart_count > 0 %}
-                            <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-bounce">{{ cart_count }}</span>
-                            {% endif %}
+                            <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold cart-badge" style="{% if cart_count|default:0 %}{% else %}display:none;{% endif %}">{{ cart_count|default:0 }}</span>
                         </a>
                         
                         <!-- User Menu -->

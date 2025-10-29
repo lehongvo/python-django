@@ -238,3 +238,31 @@ class Cart(models.Model):
     def __str__(self):
         return f"{self.customer.name} - {self.product.name} ({self.quantity})"
 
+
+class Subscriber(models.Model):
+    """Newsletter subscribers."""
+    email = models.EmailField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.email
+
+class EmailOTP(models.Model):
+    """Email-based one-time password for registration/verification."""
+    email = models.EmailField(db_index=True)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    attempts = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['email', 'is_used']),
+        ]
+
+    def __str__(self):
+        return f"OTP for {self.email} ({'used' if self.is_used else 'active'})"

@@ -6,12 +6,22 @@ from .views_api import (
     cart_sync, cart_clear,
     cart_list, cart_update, cart_remove,
 )
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+from .views_auth_api import register_api, me_api
 
 router = DefaultRouter()
 router.register(r'products', ProductViewSet, basename='product')
 router.register(r'categories', CategoryViewSet, basename='category')
 
 urlpatterns = [
+    # Auth endpoints (JWT)
+    path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/register/', register_api, name='auth_register'),
+    path('auth/me/', me_api, name='auth_me'),
     path('cart/add/', add_to_cart, name='cart_add'),
     path('cart/list/', cart_list, name='cart_list'),
     path('cart/update/', cart_update, name='cart_update'),
