@@ -1,0 +1,337 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Products - TechStore 2025{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                <i class="fas fa-box-open mr-3"></i>Our Products
+            </h1>
+            <p class="text-xl text-indigo-100 max-w-2xl mx-auto">
+                Discover our extensive collection of premium products, carefully curated for quality and innovation.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Filters and Products -->
+<section class="py-12 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Sidebar Filters -->
+            <div class="lg:w-1/4">
+                <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">
+                        <i class="fas fa-filter mr-2"></i>Filters
+                    </h3>
+                    
+                    <!-- Search -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
+                        <form method="get" class="relative">
+                            <input type="text" name="search" placeholder="Search products..." 
+                                   value="{{ search_query }}"
+                                   class="w-full px-4 py-3 pl-10 pr-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 transition-colors">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Categories -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">Categories</label>
+                        <div class="space-y-2">
+                            <a href="{% url 'store:product_list' %}" 
+                               class="flex items-center justify-between p-3 rounded-xl {% if not current_category %}bg-indigo-50 text-indigo-700 border border-indigo-200{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <span class="font-medium">All Categories</span>
+                        <span class="text-sm text-gray-500">{{ total_count }}</span>
+                            </a>
+                            {% for category in categories %}
+                            <a href="{% url 'store:product_list' %}?category={{ category.slug }}" 
+                               class="flex items-center justify-between p-3 rounded-xl {% if current_category == category.slug %}bg-indigo-50 text-indigo-700 border border-indigo-200{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                                <span class="font-medium">{{ category.name }}</span>
+                                <span class="text-sm text-gray-500">{{ category.product_set.count }}</span>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Sort -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
+                        <form method="get" id="sortForm">
+                            {% if current_category %}
+                            <input type="hidden" name="category" value="{{ current_category }}">
+                            {% endif %}
+                            {% if search_query %}
+                            <input type="hidden" name="search" value="{{ search_query }}">
+                            {% endif %}
+                            
+                            <select name="sort" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" onchange="document.getElementById('sortForm').submit()">
+                                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name A-Z</option>
+                                <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                            </select>
+                        </form>
+                    </div>
+                    
+                    <!-- Clear Filters -->
+                    {% if current_category or search_query %}
+                    <a href="{% url 'store:product_list' %}" class="w-full bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-center hover:bg-gray-300 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Clear Filters
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Products Grid -->
+            <div class="lg:w-3/4">
+                <!-- Results Header -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                            {% if current_category %}
+                                {{ current_category.name }} Products
+                            {% elif search_query %}
+                                Search Results for "{{ search_query }}"
+                            {% else %}
+                                All Products
+                            {% endif %}
+                        </h2>
+                        <p class="text-gray-600">
+                            <span class="font-semibold">{{ total_count }}</span> products found
+                            {% if current_category %}
+                                in {{ current_category.name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <!-- View Toggle -->
+                    <div class="flex items-center space-x-2 mt-4 sm:mt-0">
+                        <span class="text-sm text-gray-600">View:</span>
+                        <button class="p-2 bg-indigo-100 text-indigo-600 rounded-lg" id="gridView">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg" id="listView">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Products -->
+                {% if products %}
+                <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {% for product in products %}
+                    <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden group">
+                        <!-- Product Image -->
+                        <div class="relative h-64 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center overflow-hidden">
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                            {% else %}
+                            <div class="text-center">
+                                <i class="fas fa-image text-5xl text-indigo-300 mb-3"></i>
+                                <p class="text-indigo-500 font-medium text-sm">Product Image</p>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Discount Badge -->
+                            {% if product.discount_percent > 0 %}
+                            <div class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                                {{ product.discount_percent }}% OFF
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Quick Actions -->
+                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'store:product_detail' product.slug %}" class="bg-white text-gray-900 px-3 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors inline-flex items-center">
+                                        <i class="fas fa-eye mr-1"></i>Quick View
+                                    </a>
+                                    <button type="button" class="bg-indigo-600 text-white px-3 py-2 rounded-full text-sm font-medium hover:bg-indigo-700 transition-colors" onclick="addToWishlist({{ product.id }})">
+                                        <i class="fas fa-heart mr-1"></i>Wishlist
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Info -->
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-indigo-600 font-semibold">{{ product.category.name }}</span>
+                                <div class="flex space-x-1">
+                                    {% for tag in product.tags.all %}
+                                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">{{ tag.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                                {{ product.name }}
+                            </h3>
+                            
+                            <p class="text-gray-600 mb-4 text-sm line-clamp-2">
+                                {{ product.short_description|truncatewords:12 }}
+                            </p>
+                            
+                            <!-- Price -->
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xl font-bold text-gray-900">${{ product.price }}</span>
+                                    {% if product.compare_price %}
+                                    <span class="text-sm text-gray-500 line-through">${{ product.compare_price }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                    <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                    <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                    <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                    <i class="fas fa-star text-gray-300 text-sm"></i>
+                                    <span class="text-xs text-gray-500 ml-1">(4.0)</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Stock Status -->
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    {% if product.is_in_stock %}
+                                    <i class="fas fa-check-circle text-green-500 mr-2 text-sm"></i>
+                                    <span class="text-green-600 font-medium text-sm">In Stock</span>
+                                    {% else %}
+                                    <i class="fas fa-times-circle text-red-500 mr-2 text-sm"></i>
+                                    <span class="text-red-600 font-medium text-sm">Out of Stock</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-xs text-gray-500">{{ product.stock }} available</span>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="flex space-x-2">
+                                <a href="{% url 'store:product_detail' product.slug %}" 
+                                   class="flex-1 bg-indigo-600 text-white text-center py-2 rounded-xl font-semibold hover:bg-indigo-700 transition-colors text-sm">
+                                    <i class="fas fa-eye mr-1"></i>View Details
+                                </a>
+                                {% if product.is_in_stock %}
+                                <button class="bg-green-600 text-white px-3 py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors text-sm">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </button>
+                                {% else %}
+                                <button class="bg-gray-400 text-white px-3 py-2 rounded-xl font-semibold cursor-not-allowed text-sm" disabled>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                <div class="flex justify-between items-center mt-10">
+                    <div class="text-sm text-gray-600">
+                        Page {{ page_obj.number }} of {{ paginator.num_pages }}
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&limit={{ limit }}{% if current_category %}&category={{ current_category.slug }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                           class="px-4 py-2 bg-white border rounded-xl hover:bg-gray-50">Prev</a>
+                        {% else %}
+                        <span class="px-4 py-2 bg-gray-100 border rounded-xl text-gray-400">Prev</span>
+                        {% endif %}
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&limit={{ limit }}{% if current_category %}&category={{ current_category.slug }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                           class="px-4 py-2 bg-white border rounded-xl hover:bg-gray-50">Next</a>
+                        {% else %}
+                        <span class="px-4 py-2 bg-gray-100 border rounded-xl text-gray-400">Next</span>
+                        {% endif %}
+                    </div>
+                    <form method="get">
+                        {% if current_category %}<input type="hidden" name="category" value="{{ current_category.slug }}">{% endif %}
+                        {% if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
+                        {% if sort_by %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
+                        <input type="hidden" name="page" value="1">
+                        <label class="text-sm text-gray-600 mr-2">Per page</label>
+                        <select name="limit" class="px-3 py-2 border rounded-xl" onchange="this.form.submit()">
+                            {% for n in limits %}
+                            <option value="{{ n }}" {% if limit == n %}selected{% endif %}>{{ n }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+                
+                {% else %}
+                <!-- No Products Found -->
+                <div class="text-center py-16">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-search text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">No products found</h3>
+                    <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                        {% if search_query %}
+                        We couldn't find any products matching "{{ search_query }}". Try adjusting your search terms.
+                        {% else %}
+                        No products are available in this category at the moment.
+                        {% endif %}
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="{% url 'store:product_list' %}" class="btn-modern">
+                            <i class="fas fa-arrow-left mr-2"></i>View All Products
+                        </a>
+                        {% if search_query %}
+                        <a href="{% url 'store:product_list' %}" class="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+                            <i class="fas fa-times mr-2"></i>Clear Search
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .sticky {
+        position: sticky;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // View Toggle Functionality
+    document.getElementById('gridView').addEventListener('click', function() {
+        document.getElementById('productsGrid').className = 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6';
+        this.className = 'p-2 bg-indigo-100 text-indigo-600 rounded-lg';
+        document.getElementById('listView').className = 'p-2 text-gray-400 hover:text-gray-600 rounded-lg';
+    });
+    
+    document.getElementById('listView').addEventListener('click', function() {
+        document.getElementById('productsGrid').className = 'grid grid-cols-1 gap-6';
+        this.className = 'p-2 bg-indigo-100 text-indigo-600 rounded-lg';
+        document.getElementById('gridView').className = 'p-2 text-gray-400 hover:text-gray-600 rounded-lg';
+    });
+    
+    // Auto-submit search form on Enter
+    document.querySelector('input[name="search"]').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            this.form.submit();
+        }
+    });
+</script>
+{% endblock %}

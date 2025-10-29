@@ -1,0 +1,131 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}My Addresses - TechStore 2025{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="bg-green-500 text-white px-6 py-4 rounded-xl flex items-center space-x-3">
+                <i class="fas fa-check-circle text-2xl"></i>
+                <span class="font-semibold">{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-map-marker-alt text-indigo-600 mr-3"></i>My Addresses
+            </h1>
+            <p class="text-gray-600">Manage your shipping addresses</p>
+        </div>
+
+        <!-- Address Form -->
+        <form method="post" class="bg-white rounded-2xl shadow-lg p-8">
+            {% csrf_token %}
+            
+            <div class="space-y-6">
+                <!-- Phone -->
+                <div>
+                    <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Phone Number
+                    </label>
+                    <input type="tel" id="phone" name="phone" 
+                           value="{{ customer.phone|default:'' }}" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                
+                <!-- Street Address -->
+                <div>
+                    <label for="address" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Street Address
+                    </label>
+                    <input type="text" id="address" name="address" 
+                           value="{{ customer.address|default:'' }}" 
+                           placeholder="123 Main Street" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                
+                <!-- City and State -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="city" class="block text-sm font-semibold text-gray-700 mb-2">
+                            City
+                        </label>
+                        <input type="text" id="city" name="city" 
+                               value="{{ customer.city|default:'' }}" 
+                               placeholder="New York" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="state" class="block text-sm font-semibold text-gray-700 mb-2">
+                            State
+                        </label>
+                        <input type="text" id="state" name="state" 
+                               value="{{ customer.state|default:'' }}" 
+                               placeholder="NY" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <!-- Postal Code and Country -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="postal_code" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Postal Code
+                        </label>
+                        <input type="text" id="postal_code" name="postal_code" 
+                               value="{{ customer.postal_code|default:'' }}" 
+                               placeholder="10001" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="country" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Country
+                        </label>
+                        <input type="text" id="country" name="country" 
+                               value="{{ customer.country|default:'USA' }}" 
+                               placeholder="USA" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit Buttons -->
+            <div class="mt-8 flex justify-end space-x-4">
+                <a href="{% url 'store:account' %}" 
+                   class="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Account
+                </a>
+                <button type="submit" 
+                        class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-save mr-2"></i>Update Address
+                </button>
+            </div>
+        </form>
+        
+        <!-- Current Address Display -->
+        {% if customer.address %}
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">
+                <i class="fas fa-location-arrow text-blue-600 mr-2"></i>Current Address
+            </h3>
+            <div class="text-gray-700">
+                <p class="font-medium">{{ customer.address }}</p>
+                <p>{{ customer.city }}, {{ customer.state }} {{ customer.postal_code }}</p>
+                <p>{{ customer.country }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
