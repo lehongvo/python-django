@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.conf import settings
+from PIL import Image
+import os
 
 
 class Category(models.Model):
@@ -104,6 +107,27 @@ class Product(models.Model):
         if self.compare_price and self.compare_price > self.price:
             return int((self.compare_price - self.price) / self.compare_price * 100)
         return 0
+    
+    @property
+    def thumbnail_url(self):
+        """Return URL to a generated thumbnail, create if missing."""
+        if not self.image:
+            return ''
+        try:
+            original_path = self.image.path
+            base, ext = os.path.splitext(original_path)
+            thumb_path = f"{base}_thumb{ext}"
+            # Create thumbnail if it doesn't exist
+            if not os.path.exists(thumb_path):
+                img = Image.open(original_path)
+                img.thumbnail((400, 400), Image.LANCZOS)
+                img.save(thumb_path)
+            # Build URL
+            rel_thumb = os.path.relpath(thumb_path, settings.MEDIA_ROOT)
+            return f"{settings.MEDIA_URL}{rel_thumb}".replace('\\', '/')
+        except Exception:
+            # Fallback to original image URL
+            return self.image.url if self.image else ''
     
     def save(self, *args, **kwargs):
         if not self.sku:

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}TechStore 2025 - Premium E-commerce{% endblock %}</title>
+    <title>{% block title %}{{ site_name }} - Premium E-commerce{% endblock %}</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -23,6 +23,9 @@
     
     <!-- Cart JavaScript -->
     {% load static %}
+    {% load store_tags %}
+    {% load store_filters %}
+    <link rel="stylesheet" href="{% static 'store/css/base.css' %}">
     <script src="{% static 'store/js/cart.js' %}"></script>
     
     <!-- Custom Styles -->
@@ -226,8 +229,8 @@
                         <div class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
                             <i class="fas fa-store text-white text-sm"></i>
                         </div>
-                        <span class="text-xl font-bold text-gray-900">TechStore</span>
-                        <span class="text-xs bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-1 rounded-full">2025</span>
+                        <span class="text-xl font-bold text-gray-900">{{ site_name }}</span>
+                        <span class="text-xs bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-1 rounded-full">{% current_year %}</span>
                     </a>
                 </div>
                 
@@ -236,6 +239,11 @@
                     <a href="{% url 'store:home' %}" class="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Home</a>
                     <a href="{% url 'store:product_list' %}" class="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Products</a>
                     <a href="{% url 'store:category_list' %}" class="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Categories</a>
+                    {% if nav_categories %}
+                        {% for c in nav_categories %}
+                            <a href="{% url 'store:product_list' %}?category={{ c.slug }}" class="text-gray-500 hover:text-indigo-600 text-sm transition-colors">{{ c.name }}</a>
+                        {% endfor %}
+                    {% endif %}
                     <a href="{% url 'store:order_tracking' %}" class="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Track Order</a>
                 </div>
                 
@@ -256,7 +264,7 @@
                     <!-- Cart -->
                     <a href="{% url 'store:cart' %}" class="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors">
                         <i class="fas fa-shopping-cart text-lg"></i>
-                        <span class="cart-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" style="display: none;">0</span>
+                        <span class="cart-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ cart_count }}</span>
                     </a>
                     
                     <!-- User Menu -->
@@ -325,7 +333,7 @@
                         <div class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
                             <i class="fas fa-store text-white text-sm"></i>
                         </div>
-                        <span class="text-xl font-bold">TechStore 2025</span>
+                        <span class="text-xl font-bold">{{ site_name }}</span>
                     </div>
                     <p class="text-gray-400 mb-6 max-w-md">
                         Your premium destination for cutting-edge technology and innovative products. 

@@ -1,0 +1,9 @@
+{% if user.is_authenticated %}
+<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-sm">
+    <i class="fa fa-user"></i>
+    {{ user.username }}
+    {% if is_staff %}<span class="ml-2 text-xs bg-yellow-200 px-2 py-0.5 rounded">Admin</span>{% endif %}
+</span>
+{% else %}
+<a href="/login/" class="text-sm text-indigo-600">Login</a>
+{% endif %}

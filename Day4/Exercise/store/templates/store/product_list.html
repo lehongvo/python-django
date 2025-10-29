@@ -1,6 +1,8 @@
 {% extends 'store/base.html' %}
 
-{% block title %}Products - TechStore 2025{% endblock %}
+{% load store_filters %}
+{% load store_tags %}
+{% block title %}Products - {{ site_name }}{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
@@ -132,7 +134,7 @@
                         <!-- Product Image -->
                         <div class="relative h-64 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center overflow-hidden">
                             {% if product.image %}
-                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                            <img src="{{ product.thumbnail_url|default:product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
                             {% else %}
                             <div class="text-center">
                                 <i class="fas fa-image text-5xl text-indigo-300 mb-3"></i>
@@ -182,9 +184,9 @@
                             <!-- Price -->
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center space-x-2">
-                                    <span class="text-xl font-bold text-gray-900">${{ product.price }}</span>
+                                    <span class="text-xl font-bold text-gray-900">{{ product.price|format_vnd }}</span>
                                     {% if product.compare_price %}
-                                    <span class="text-sm text-gray-500 line-through">${{ product.compare_price }}</span>
+                                    <span class="text-sm text-gray-500 line-through">{{ product.compare_price|format_vnd }}</span>
                                     {% endif %}
                                 </div>
                                 <div class="flex items-center space-x-1">
