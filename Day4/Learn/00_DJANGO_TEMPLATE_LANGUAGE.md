@@ -1,6 +1,7 @@
 # Django Template Language (DTL) - Tổng Quan
 
 ## 🎯 Mục Tiêu
+
 - Hiểu cấu trúc và cú pháp Django Template Language
 - Áp dụng template inheritance và blocks
 - Sử dụng template tags và filters
@@ -13,6 +14,7 @@
 **Khái niệm:** Template inheritance cho phép tạo template base và các template con kế thừa, giúp tránh lặp code.
 
 **Cấu trúc cơ bản:**
+
 ```django
 {# base.html - Template cha #}
 <!DOCTYPE html>
@@ -36,6 +38,7 @@
 ```
 
 **Các thẻ quan trọng:**
+
 - `{% extends 'base.html' %}` - Kế thừa template cha
 - `{% block name %}{% endblock %}` - Định nghĩa block
 - `{{ block.super }}` - Lấy nội dung block từ template cha
@@ -47,6 +50,7 @@
 **Các template tags phổ biến:**
 
 #### a. If/Else
+
 ```django
 {% if user.is_authenticated %}
     <p>Welcome, {{ user.username }}!</p>
@@ -56,6 +60,7 @@
 ```
 
 #### b. For Loop
+
 ```django
 {% for item in items %}
     <li>{{ item }}</li>
@@ -65,17 +70,20 @@
 ```
 
 #### c. Include
+
 ```django
 {% include 'components/header.html' %}
 ```
 
 #### d. URL
+
 ```django
 <a href="{% url 'app:view_name' %}">Link</a>
 <a href="{% url 'app:detail' pk=object.id %}">Detail</a>
 ```
 
 #### e. Static Files
+
 ```django
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -118,6 +126,7 @@
 **Khái niệm:** Context processors là các hàm tự động thêm dữ liệu vào context của tất cả templates.
 
 **Cấu hình trong settings.py:**
+
 ```python
 TEMPLATES = [
     {
@@ -137,6 +146,7 @@ TEMPLATES = [
 ```
 
 **Tạo custom context processor:**
+
 ```python
 # myapp/context_processors.py
 def global_settings(request):
@@ -165,6 +175,7 @@ TEMPLATES = [
 **Tạo custom template tags:**
 
 **Bước 1:** Tạo thư mục `templatetags`
+
 ```
 myapp/
     __init__.py
@@ -176,6 +187,7 @@ myapp/
 ```
 
 **Bước 2:** Viết filter
+
 ```python
 # templatetags/my_filters.py
 from django import template
@@ -200,6 +212,7 @@ def show_widget(title):
 ```
 
 **Bước 3:** Sử dụng trong template
+
 ```django
 {% load my_filters %}
 
@@ -227,6 +240,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 ```
 
 **URL configuration:**
+
 ```python
 # urls.py
 from django.conf import settings
@@ -242,6 +256,7 @@ if settings.DEBUG:
 ```
 
 **Cấu trúc thư mục:**
+
 ```
 project/
     static/
@@ -258,6 +273,7 @@ project/
 ```
 
 **Sử dụng trong template:**
+
 ```django
 {% load static %}
 
@@ -268,6 +284,7 @@ project/
 ### 7. Media Files Handling
 
 **Upload file trong model:**
+
 ```python
 from django.db import models
 
@@ -275,12 +292,13 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     avatar = models.ImageField(upload_to='avatars/', blank=True)
     resume = models.FileField(upload_to='resumes/', blank=True)
-    
+  
     class Meta:
         upload_to = 'user_profiles/%Y/%m/'  # Dynamic path
 ```
 
 **Form với file upload:**
+
 ```python
 # forms.py
 from django import forms
@@ -295,6 +313,7 @@ class ProfileForm(forms.ModelForm):
 ```
 
 **Template form:**
+
 ```django
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
@@ -304,6 +323,7 @@ class ProfileForm(forms.ModelForm):
 ```
 
 **View xử lý upload:**
+
 ```python
 from django.shortcuts import render, redirect
 from .forms import ProfileForm
@@ -334,25 +354,25 @@ def upload_profile(request):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}My Site{% endblock %}</title>
-    
+  
     {# Bootstrap #}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+  
     {# Hoặc Tailwind #}
     <script src="https://cdn.tailwindcss.com"></script>
-    
+  
     <link rel="stylesheet" href="{% static 'css/custom.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     {% include 'components/navbar.html' %}
-    
+  
     <main>
         {% block content %}{% endblock %}
     </main>
-    
+  
     {% include 'components/footer.html' %}
-    
+  
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/app.js' %}"></script>
     {% block extra_js %}{% endblock %}
@@ -361,11 +381,12 @@ def upload_profile(request):
 ```
 
 **AJAX với Django:**
+
 ```javascript
 // static/js/app.js
 document.getElementById('myForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+  
     fetch(this.action, {
         method: 'POST',
         body: new FormData(this),
@@ -398,39 +419,44 @@ function getCookie(name) {
 ## 📝 Bài Tập Thực Hành
 
 ### Bài 1: Template Inheritance
+
 - Tạo `base.html` với navbar, sidebar, footer
 - Tạo 3 trang con kế thừa từ base
 - Mỗi trang có title và content riêng
 
 ### Bài 2: Template Tags & Filters
+
 - Hiển thị danh sách sản phẩm với filters
 - Tạo filter tùy chỉnh `price_with_discount`
 - Hiển thị date formatting
 
 ### Bài 3: Static Files
+
 - Thêm CSS vào project
 - Thêm JavaScript với AJAX
 - Thêm images vào template
 
 ### Bài 4: Custom Template Tags
+
 - Tạo tag `show_latest_posts`
 - Tạo tag `calculate_total`
 - Tạo inclusion_tag cho sidebar
 
 ### Bài 5: Media Files
+
 - Tạo model với ImageField
 - Form upload ảnh
 - Hiển thị ảnh đã upload
 
 ## ✅ Checklist
 
-- [x] Hiểu template inheritance và blocks
-- [x] Sử dụng được các template tags phổ biến
-- [x] Áp dụng filters để format dữ liệu
-- [x] Tạo custom template tags và filters
-- [x] Quản lý static files
-- [x] Xử lý media files (upload/display)
-- [x] Tích hợp frontend (CSS/JS) với Django
+- [X] Hiểu template inheritance và blocks
+- [X] Sử dụng được các template tags phổ biến
+- [X] Áp dụng filters để format dữ liệu
+- [X] Tạo custom template tags và filters
+- [X] Quản lý static files
+- [X] Xử lý media files (upload/display)
+- [X] Tích hợp frontend (CSS/JS) với Django
 
 ## 🔗 Tài Liệu Tham Khảo
 

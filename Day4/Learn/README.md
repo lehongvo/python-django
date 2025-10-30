@@ -63,6 +63,12 @@ Day 4 tập trung vào việc học Django Template Language (DTL) và các kỹ
 - Search functionality
 - Complete examples
 
+#### 8. [JWT Authentication (DRF SimpleJWT)](./08_JWT_AUTHENTICATION.md)
+- Cấu hình DRF + SimpleJWT
+- CookieJWTAuthentication đọc token từ cookie
+- Set/clear JWT cookies ở login/logout
+- Endpoints `/api/auth/token/`, `/api/auth/token/refresh/`, `/api/auth/me/`
+
 ## 🎯 Mục Tiêu Học Tập
 
 Sau khi hoàn thành Day 4, bạn sẽ:
@@ -90,7 +96,8 @@ Day4/
 │   ├── 04_CONTEXT_PROCESSORS.md
 │   ├── 05_CUSTOM_TEMPLATE_TAGS.md
 │   ├── 06_MEDIA_FILES.md
-│   └── 07_FRONTEND_INTEGRATION.md
+│   ├── 07_FRONTEND_INTEGRATION.md
+│   └── 08_JWT_AUTHENTICATION.md
 └── Exercise/ (sẽ tạo bài tập thực hành)
 ```
 
