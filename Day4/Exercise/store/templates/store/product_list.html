@@ -319,22 +319,25 @@
                             </div>
                             
                             <!-- Actions -->
-                            <div class="flex space-x-2 mt-auto product-actions">
-                                <a href="{% url 'store:product_detail' product.slug %}" 
-                                   class="flex-1 btn btn-primary text-center">
-                                    <i class="fas fa-eye mr-2"></i>
-                                    <span>View Details</span>
-                                </a>
-                                {% if product.is_in_stock %}
-                                <button type="button" class="btn btn-secondary" data-add-to-cart data-product-id="{{ product.id }}" data-quantity="1">
-                                    <i class="fas fa-shopping-cart mr-2"></i>
-                                    <span>Add</span>
-                                </button>
-                                {% else %}
-                                <button type="button" class="btn btn-disabled" disabled>
-                                    <i class="fas fa-times mr-2"></i><span>Sold Out</span>
-                                </button>
-                                {% endif %}
+                            <div class="mt-auto product-actions">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <a href="{% url 'store:product_detail' product.slug %}"
+                                       class="action-btn action-primary">
+                                        <i class="fas fa-eye"></i>
+                                        <span>View Details</span>
+                                    </a>
+                                    {% if product.is_in_stock %}
+                                    <button type="button" class="action-btn action-secondary" data-add-to-cart data-product-id="{{ product.id }}" data-quantity="1">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <span>Add</span>
+                                    </button>
+                                    {% else %}
+                                    <button type="button" class="action-btn action-disabled" disabled>
+                                        <i class="fas fa-times"></i>
+                                        <span>Sold Out</span>
+                                    </button>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -423,11 +426,33 @@
     .product-card .product-actions .btn { height: 44px; padding: 0 16px; border-radius: 12px; font-weight: 600; }
     .product-card .btn-primary { background:#4f46e5; color:#fff; }
     .product-card .btn-primary:hover { background:#4338ca; transform: translateY(-1px); }
-     .product-card .btn-outline { background:#fff; color:#111827; border:1px solid #e5e7eb; }
-     .product-card .btn-outline:hover { background:#f9fafb; }
-     .product-card .btn-secondary { background:#fff; color:#111827; border:1px solid #e5e7eb; }
-     .product-card .btn-secondary:hover { background:#eef2ff; border-color:#c7d2fe; }
-     .product-card .btn-disabled { background:#e5e7eb;color:#9ca3af;border:1px solid #d1d5db;cursor:not-allowed; }
+    .product-card .btn-outline { background:#fff; color:#111827; border:1px solid #e5e7eb; }
+    .product-card .btn-outline:hover { background:#f9fafb; }
+    .product-card .btn-secondary { background:#fff; color:#111827; border:1px solid #e5e7eb; }
+    .product-card .btn-secondary:hover { background:#eef2ff; border-color:#c7d2fe; }
+    .product-card .btn-disabled { background:#e5e7eb;color:#9ca3af;border:1px solid #d1d5db;cursor:not-allowed; }
+
+    /* Unified professional action buttons */
+    .product-card .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 44px;
+        padding: 0 12px;
+        gap: 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all .2s ease;
+        box-shadow: 0 2px 6px rgba(17,24,39,0.05);
+    }
+    .product-card .action-btn i { font-size: 14px; }
+    .product-card .action-primary { background:#4f46e5; color:#fff; }
+    .product-card .action-primary:hover { background:#4338ca; transform: translateY(-1px); box-shadow: 0 6px 14px rgba(79,70,229,.25); }
+    .product-card .action-secondary { background:#fff; color:#111827; border:1px solid #e5e7eb; }
+    .product-card .action-secondary:hover { background:#f8fafc; border-color:#c7d2fe; transform: translateY(-1px); }
+    .product-card .action-disabled { background:#e5e7eb; color:#9ca3af; border:1px solid #d1d5db; cursor:not-allowed; }
 
     .product-card {
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -813,42 +838,7 @@
         }
     });
     
-    // Add to Cart functionality
-    function addToCart(productId) {
-        fetch('/api/cart/add/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                product_id: productId,
-                quantity: 1
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showNotification('Added to cart! 🛒', 'success');
-                // Update cart count
-                if (typeof Cart !== 'undefined') {
-                    Cart.updateCount();
-                }
-            } else if (data.requires_login) {
-                showNotification('Please login to add items to cart', 'error');
-                setTimeout(() => {
-                    window.location.href = '/login/';
-                }, 1500);
-            } else {
-                showNotification(data.message || 'Failed to add to cart', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Failed to add to cart', 'error');
-        });
-    }
+    // Removed page-local addToCart to use global cart.js handlers (adds + syncs)
     
     // Notification system
     function showNotification(message, type = 'info') {

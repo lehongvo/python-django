@@ -6,10 +6,20 @@
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
-        <h1 class="text-4xl font-bold text-gray-900 mb-8">
-            <i class="fas fa-shopping-cart text-indigo-600 mr-3"></i>
-            Your Shopping Cart
-        </h1>
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-4xl font-black tracking-tight text-gray-900">
+                <i class="fas fa-shopping-cart text-indigo-600 mr-3"></i>
+                Your Shopping Cart
+            </h1>
+            <a href="{% url 'store:product_list' %}" class="hidden md:inline-flex items-center text-indigo-600 hover:text-indigo-700 font-semibold">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Continue Shopping
+            </a>
+        </div>
+        <div class="mb-6 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-2xl px-5 py-3 flex items-center gap-3">
+            <i class="fas fa-gift"></i>
+            <p class="text-sm">You’re <span class="font-semibold">$20</span> away from <span class="font-semibold">FREE express shipping</span>. Keep exploring great deals!</p>
+        </div>
 
         <div id="cart-content">
             <div class="bg-white rounded-2xl shadow-lg p-8">
@@ -28,7 +38,7 @@
         <div id="cart-with-items" style="display: none;">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
-                    <div class="bg-white rounded-2xl shadow-lg p-8">
+                    <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8">
                         <div id="cart-items">
                             <!-- Cart items will be inserted here by JavaScript -->
                         </div>
@@ -36,10 +46,10 @@
                 </div>
 
                 <div class="lg:col-span-1">
-                    <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
-                        <h2 class="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+                    <div class="bg-white rounded-3xl shadow-lg p-6 sticky top-8 space-y-6">
+                        <h2 class="text-2xl font-extrabold text-gray-900">Order Summary</h2>
                         
-                        <div class="space-y-3 mb-6">
+                        <div class="space-y-3">
                             <div class="flex justify-between text-gray-700">
                                 <span>Subtotal</span>
                                 <span class="font-semibold" id="subtotal">$0.00</span>
@@ -52,13 +62,18 @@
                                 <span>Tax (estimated)</span>
                                 <span class="font-semibold" id="tax">$0.00</span>
                             </div>
-                            <div class="flex justify-between text-2xl font-bold text-gray-900 pt-2 border-t border-gray-200">
+                            <div class="flex justify-between text-2xl font-black text-gray-900 pt-2 border-t border-gray-200">
                                 <span>Total</span>
                                 <span class="text-indigo-600" id="grand-total">$0.00</span>
                             </div>
                         </div>
-                        
-                        <button id="checkout-btn" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors">
+                        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center gap-2">
+                            <i class="fas fa-ticket-alt text-indigo-600"></i>
+                            <input type="text" placeholder="Promo code" class="flex-1 bg-transparent focus:outline-none text-sm">
+                            <button class="px-3 py-2 bg-white rounded-lg border text-sm font-semibold hover:bg-gray-50">Apply</button>
+                        </div>
+
+                        <button id="checkout-btn" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-md">
                             <i class="fas fa-lock mr-2"></i>
                             Proceed to Checkout
                         </button>
@@ -67,6 +82,21 @@
                             <i class="fas fa-arrow-left mr-2"></i>
                             Continue Shopping
                         </a>
+
+                        <div class="pt-2 grid grid-cols-3 gap-3 text-xs text-gray-600">
+                            <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                                <i class="fas fa-shield-alt text-green-600"></i>
+                                <span>Secure payment</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                                <i class="fas fa-undo text-indigo-600"></i>
+                                <span>Free returns</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                                <i class="fas fa-headset text-purple-600"></i>
+                                <span>24/7 support</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -107,6 +137,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     document.getElementById('checkout-btn').addEventListener('click', function() {
+        // Go to checkout page (GET). Checkout will read localStorage and show payment options
         window.location.href = '/checkout/';
     });
 });
@@ -124,29 +155,30 @@ async function displayCart(cart) {
             const itemSubtotal = parseFloat(product.price) * item.quantity;
             subtotal += itemSubtotal;
             
-            // Default image when no image is available
-            const productImage = product.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" font-family="Arial,sans-serif" font-size="14" fill="%23999" text-anchor="middle" dominant-baseline="middle"%3E%3Ctspan x="50%25" dy="0" fill="%23666"%3E' + product.name.substring(0, 30) + '%3C/tspan%3E%3C/text%3E%3C/svg%3E';
+            // Image: DB image if available, else Picsum seeded by product.id; finally SVG placeholder
+            const productImage = product.image || `https://picsum.photos/seed/${product.id}/200/200`;
+            const placeholderSvg = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" font-family="Arial,sans-serif" font-size="14" fill="%23999" text-anchor="middle" dominant-baseline="middle"%3E%3Ctspan x="50%25" dy="0" fill="%23666"%3E' + product.name.substring(0, 30) + '%3C/tspan%3E%3C/text%3E%3C/svg%3E';
             
             html += `
-                <div class="flex items-center space-x-4 mb-6 pb-6 border-b border-gray-200">
-                    <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                <div class="flex items-center gap-5 mb-6 pb-6 border-b border-gray-200">
+                    <div class="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shadow-sm">
                         <img src="${productImage}" alt="${product.name}" 
                              class="w-full h-full object-cover"
-                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'200\\'%3E%3Crect fill=\\'%23f0f0f0\\' width=\\'200\\' height=\\'200\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' font-family=\\'Arial,sans-serif\\' font-size=\\'12\\' fill=\\'%23999\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'%3E%3Ctspan x=\\'50%25\\' dy=\\'-6\\'%3E${product.name.substring(0, 20)}%3C/tspan%3E%3Ctspan x=\\'50%25\\' dy=\\'6\\'%3EProduct%3C/tspan%3E%3C/text%3E%3C/svg%3E'">
+                             onerror="this.onerror=null; this.src='${'${placeholderSvg}'}'">
                     </div>
                     <div class="flex-1">
-                        <h3 class="font-semibold text-gray-900">${product.name}</h3>
-                        <p class="text-sm text-gray-600">${product.short_description || (product.description ? product.description.substring(0, 50) : 'No description')}...</p>
-                        <div class="flex items-center space-x-4 mt-2">
-                            <div class="flex items-center space-x-2">
+                        <h3 class="font-semibold text-gray-900 line-clamp-1">${product.name}</h3>
+                        <p class="text-sm text-gray-600 line-clamp-2">${product.short_description || (product.description ? product.description.substring(0, 80) : 'No description')}...</p>
+                        <div class="flex items-center justify-between mt-3">
+                            <div class="flex items-center gap-2">
                                 <button onclick="updateQuantity(${product.id}, -1)" class="w-8 h-8 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors">-</button>
                                 <span class="font-semibold w-8 text-center">${item.quantity}</span>
                                 <button onclick="updateQuantity(${product.id}, 1)" class="w-8 h-8 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors">+</button>
                             </div>
-                            <span class="text-indigo-600 font-bold">$${itemSubtotal.toFixed(2)}</span>
+                            <span class="text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-lg">$${itemSubtotal.toFixed(2)}</span>
                         </div>
                     </div>
-                    <button onclick="removeFromCart(${product.id})" class="text-red-500 hover:text-red-700 transition-colors">
+                    <button onclick="removeFromCart(${product.id})" class="text-red-500 hover:text-red-600 transition-colors">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>

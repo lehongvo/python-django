@@ -1,0 +1,42 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Confirm Account Deletion - TechStore 2025{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md mx-auto">
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-xl {{ message.tags|default:'bg-red-500 text-white' }} bg-red-500 text-white">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <h1 class="text-2xl font-extrabold text-gray-900 mb-2"><i class="fas fa-user-slash text-red-600 mr-2"></i>Confirm Deletion</h1>
+            <p class="text-gray-600 mb-6">We sent a 6‑digit code to <span class="font-semibold">{{ email }}</span>. Enter it below to permanently delete your account.</p>
+
+            <form method="post" action="{% url 'store:delete_account_confirm' %}" class="space-y-4">
+                {% csrf_token %}
+                <label class="block text-sm font-semibold text-gray-700">OTP Code</label>
+                <input name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent tracking-widest text-center text-lg">
+
+                <button type="submit" class="w-full bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700">
+                    <i class="fas fa-check mr-2"></i>Confirm & Delete Account
+                </button>
+            </form>
+
+            <a href="{% url 'store:account_settings' %}" class="block text-center text-gray-600 hover:text-gray-800 mt-4">
+                Cancel and go back
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

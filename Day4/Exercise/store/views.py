@@ -8,6 +8,7 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Product, Category, Tag, Order, OrderItem, Customer, Subscriber
 from django.db.models import Q, F, Case, When, Value, FloatField, ExpressionWrapper
 from django.http import JsonResponse
+from django.urls import reverse
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail, EmailMultiAlternatives
@@ -268,8 +269,9 @@ def checkout(request):
         
         messages.success(request, f'Order {order_number} placed successfully!')
         
-        # Clear cart
-        return redirect('store:order_tracking') + f'?order_number={order_number}'
+        # Redirect to tracking page with query param
+        tracking_url = reverse('store:order_tracking') + f'?order_number={order_number}'
+        return redirect(tracking_url)
     
     # GET - Show checkout page
     # Get product from query params (for Buy Now)
@@ -297,10 +299,6 @@ def checkout(request):
         except Product.DoesNotExist:
             messages.error(request, 'Product not found')
             return redirect('store:product_list')
-    else:
-        # Get cart from localStorage (for now, show message to add products)
-        messages.info(request, 'Your cart is empty. Add some products first!')
-    
     context = {
         'cart_products': cart_products,
         'subtotal': subtotal,
@@ -722,3 +720,67 @@ def subscribe(request):
         pass
 
     return JsonResponse({'message': 'Subscribed successfully' if created else 'You are already subscribed'})
+
+
+@login_required
+def delete_account_request(request):
+    """Step 1: send OTP to user's email for account deletion confirmation."""
+    user = request.user
+    email = user.email
+    if not email:
+        messages.error(request, 'Your account has no email address. Please add an email first in Settings.')
+        return redirect('store:account_settings')
+
+    # Create OTP valid for 10 minutes
+    code = f"{random.randint(100000, 999999)}"
+    expires_at = timezone.now() + timedelta(minutes=10)
+    EmailOTP.objects.create(email=email, code=code, expires_at=expires_at)
+
+    # Send email
+    try:
+        from django.conf import settings as dj_settings
+        context = { 'code': code, 'user': user }
+        subject = 'Confirm Account Deletion — Your OTP Code'
+        text_body = f"Your OTP code is {code}. It expires in 10 minutes. Enter this code to confirm deleting your account."
+        send_mail(subject, text_body, dj_settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
+    except Exception as e:
+        messages.error(request, f"Failed to send OTP email: {e}")
+        return redirect('store:account_settings')
+
+    return render(request, 'store/account_delete.html', { 'email': email })
+
+
+@login_required
+def delete_account_confirm(request):
+    """Step 2: verify OTP and delete the account permanently."""
+    if request.method != 'POST':
+        return redirect('store:account_settings')
+
+    otp = request.POST.get('otp', '').strip()
+    if not (otp.isdigit() and len(otp) == 6):
+        messages.error(request, 'OTP must be 6 digits.')
+        return render(request, 'store/account_delete.html', { 'email': request.user.email })
+
+    now = timezone.now()
+    rec = EmailOTP.objects.filter(email=request.user.email, is_used=False, expires_at__gt=now, code=otp).order_by('-created_at').first()
+    if not rec:
+        messages.error(request, 'Invalid or expired OTP. Please request a new code.')
+        return render(request, 'store/account_delete.html', { 'email': request.user.email })
+
+    # Mark used and delete account data
+    rec.is_used = True
+    rec.save(update_fields=['is_used'])
+
+    from django.contrib.auth.models import User
+    user = request.user
+    logout(request)
+    try:
+        # Detach related customer if any, then delete user (on_delete CASCADE may handle)
+        Customer.objects.filter(user=user).update(user=None)
+        User.objects.filter(id=user.id).delete()
+    finally:
+        messages.success(request, 'Your account has been deleted. We’re sorry to see you go!')
+        response = redirect('store:home')
+        response.delete_cookie('access_token', path='/')
+        response.delete_cookie('refresh_token', path='/')
+        return response

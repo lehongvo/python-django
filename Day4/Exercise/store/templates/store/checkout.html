@@ -24,7 +24,6 @@
             {% endfor %}
         {% endif %}
 
-        {% if cart_products %}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Order Summary -->
             <div class="lg:col-span-2">
@@ -137,35 +136,12 @@
                         Order Summary
                     </h2>
                     
-                    <div class="space-y-4 mb-6">
-                        {% for item in cart_products %}
-                        <div class="flex items-start space-x-4">
-                            {% if item.product.image %}
-                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" 
-                                 class="w-16 h-16 object-cover rounded-lg">
-                            {% else %}
-                            <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-image text-gray-400"></i>
-                            </div>
-                            {% endif %}
-                            
-                            <div class="flex-1 min-w-0">
-                                <div class="font-semibold text-gray-900 truncate">
-                                    {{ item.product.name }}
-                                </div>
-                                <div class="text-sm text-gray-600">Qty: {{ item.quantity }}</div>
-                                <div class="text-lg font-bold text-indigo-600 mt-1">
-                                    ${{ item.subtotal|floatformat:2 }}
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
+                    <div id="order-items" class="space-y-4 mb-6"></div>
                     
                     <div class="border-t border-gray-200 pt-4 space-y-3">
                         <div class="flex justify-between text-gray-700">
                             <span>Subtotal</span>
-                            <span class="font-semibold">${{ subtotal|floatformat:2 }}</span>
+                            <span id="sum-subtotal" class="font-semibold">$0.00</span>
                         </div>
                         <div class="flex justify-between text-gray-700">
                             <span>Shipping</span>
@@ -173,11 +149,11 @@
                         </div>
                         <div class="flex justify-between text-gray-700">
                             <span>Tax (estimated)</span>
-                            <span class="font-semibold">${{ tax|floatformat:2 }}</span>
+                            <span id="sum-tax" class="font-semibold">$0.00</span>
                         </div>
                         <div class="flex justify-between text-2xl font-bold text-gray-900 pt-2 border-t border-gray-200">
                             <span>Total</span>
-                            <span class="text-indigo-600">${{ grand_total|floatformat:2 }}</span>
+                            <span id="sum-total" class="text-indigo-600">$0.00</span>
                         </div>
                     </div>
                     
@@ -194,23 +170,12 @@
                 </div>
             </div>
         </div>
-        {% else %}
-        <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-12 text-center">
-            <i class="fas fa-shopping-cart text-6xl text-gray-300 mb-6"></i>
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Your cart is empty</h2>
-            <p class="text-gray-600 mb-8">Add some products to your cart first!</p>
-            <a href="{% url 'store:product_list' %}" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Continue Shopping
-            </a>
-        </div>
-        {% endif %}
     </div>
 </div>
 
 <script>
 // Checkout form submission
-document.getElementById('checkout-form').addEventListener('submit', function(e) {
+document.getElementById('checkout-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const formData = new FormData(this);
@@ -220,15 +185,13 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     
     // Get cart from localStorage
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
-    // Get product details for cart
     const cartItems = [];
     for (const item of cart) {
-        cartItems.push({
-            'product_id': item.product_id,
-            'quantity': item.quantity,
-            'price': getPriceForProduct(item.product_id) // You'll need to implement this
-        });
+        try {
+            const res = await fetch(`/api/products/${item.product_id}/`);
+            const p = await res.json();
+            cartItems.push({ product_id: item.product_id, quantity: item.quantity, price: parseFloat(p.price) });
+        } catch (_) {}
     }
     
     // Add cart data to form
@@ -253,17 +216,38 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     });
 });
 
-// Helper function to get price from API
-async function getPriceForProduct(productId) {
-    try {
-        const response = await fetch(`/api/products/${productId}/`);
-        const product = await response.json();
-        return product.price;
-    } catch (error) {
-        console.error('Error fetching product:', error);
-        return '0.00';
+// Render summary on load from localStorage
+document.addEventListener('DOMContentLoaded', async function() {
+    const wrapper = document.getElementById('order-items');
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    let subtotal = 0;
+    let html = '';
+    for (const item of cart) {
+        try {
+            const res = await fetch(`/api/products/${item.product_id}/`);
+            const p = await res.json();
+            const itemSubtotal = parseFloat(p.price) * item.quantity;
+            subtotal += itemSubtotal;
+            const img = p.image || `https://picsum.photos/seed/${p.id}/100/100`;
+            html += `
+            <div class="flex items-start space-x-4">
+                <img src="${img}" class="w-16 h-16 object-cover rounded-lg" alt="${p.name}">
+                <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-gray-900 truncate">${p.name}</div>
+                    <div class="text-sm text-gray-600">Qty: ${item.quantity}</div>
+                    <div class="text-lg font-bold text-indigo-600 mt-1">$${itemSubtotal.toFixed(2)}</div>
+                </div>
+            </div>`;
+        } catch (_) {}
     }
-}
+    if (wrapper) wrapper.innerHTML = html || '<div class="text-sm text-gray-500">Cart is empty. Go back to add products.</div>';
+    const tax = subtotal * 0.1;
+    const total = subtotal + tax;
+    const el = id => document.getElementById(id);
+    if (el('sum-subtotal')) el('sum-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+    if (el('sum-tax')) el('sum-tax').textContent = `$${tax.toFixed(2)}`;
+    if (el('sum-total')) el('sum-total').textContent = `$${total.toFixed(2)}`;
+});
 </script>
 {% endblock %}
 

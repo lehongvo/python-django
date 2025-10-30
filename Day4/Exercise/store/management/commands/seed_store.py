@@ -1,6 +1,6 @@
 import random
 import string
-from typing import List
+from typing import List, Optional
 
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
@@ -9,6 +9,8 @@ from django.db import transaction
 from store.models import Category, Tag, Product
 from django.core.files.base import ContentFile
 import requests
+import json
+import os
 
 
 WORDS = (
@@ -79,17 +81,51 @@ def random_sentence() -> str:
     return f"{random.choice(DESCRIPTIONS)} {random.choice(DESCRIPTIONS)}"
 
 
-def get_product_image_url(product_name):
-    """Get a relevant Unsplash image URL for a product name."""
-    # Extract the last word (the product type)
+def load_overrides() -> dict:
+    """Load per-product image overrides from seed_assets/product_image_overrides.json if present."""
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        json_path = os.path.join(base_dir, "store", "seed_assets", "product_image_overrides.json")
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+PRODUCT_IMAGE_OVERRIDES = load_overrides()
+
+
+def build_keywords(product_name: str) -> str:
+    name = product_name.lower()
+    # Prefer brand + model if present (e.g., 'iphone 16 pro')
+    for brand in ["iphone", "ipad", "macbook", "imac", "apple watch", "galaxy", "samsung", "pixel", "xiaomi", "oppo", "vivo", "sony", "canon", "nikon", "lenovo", "asus", "dell", "hp", "logitech", "anker"]:
+        if brand in name:
+            return name
+    # Fallback to product type mapping
     words = product_name.split()
     product_type = words[-1] if words else "product"
-    
-    # Check if we have a specific image for this product type
-    search_term = PRODUCT_IMAGES.get(product_type, product_type.lower())
-    
-    # Use Unsplash Source API for better product-specific images
-    return f"https://source.unsplash.com/800x600/?{search_term}"
+    return PRODUCT_IMAGES.get(product_type, product_type.lower())
+
+
+def get_product_image_url(product_name: str, slug: Optional[str] = None) -> str:
+    """Return a best-effort image URL for the given product name.
+    Priority:
+      1) Exact override in product_image_overrides.json (key contains name)
+      2) Keyword-based image from LoremFlickr (stable via lock)
+      3) Picsum seed as last resort
+    """
+    # 1) Exact override (substring match, case-insensitive)
+    lower = product_name.lower()
+    for key, url in PRODUCT_IMAGE_OVERRIDES.items():
+        if key.lower() in lower and isinstance(url, str) and url.startswith("http"):
+            return url
+
+    # 2) Keyword-based provider (no API key)
+    keywords = build_keywords(product_name)
+    lock = slug or slugify(product_name)
+    return f"https://loremflickr.com/800/600/{requests.utils.quote(keywords)}?lock={lock}"
 
 
 def unique_slug(base: str) -> str:
@@ -118,12 +154,16 @@ class Command(BaseCommand):
         parser.add_argument("--categories", type=int, default=20)
         parser.add_argument("--products", type=int, default=2000)
         parser.add_argument("--images", action="store_true", help="Download random images for products")
+        parser.add_argument("--overrides", action="store_true", help="Use product_image_overrides.json if present")
 
     @transaction.atomic
     def handle(self, *args, **options):
         num_categories = int(options["categories"])
         num_products = int(options["products"])
         with_images = bool(options.get("images"))
+        if options.get("overrides"):
+            # Force load overrides early to let user know
+            _ = PRODUCT_IMAGE_OVERRIDES
 
         self.stdout.write(self.style.NOTICE(f"Seeding {num_categories} categories and {num_products} products..."))
 
@@ -218,8 +258,9 @@ class Command(BaseCommand):
                 if with_images and not getattr(product, 'image', None):
                     try:
                         # Use product-specific image URL
-                        img_url = get_product_image_url(product.name)
-                        resp = requests.get(img_url, timeout=15)
+                        img_url = get_product_image_url(product.name, slug)
+                        headers = {"User-Agent": "TechStoreSeeder/1.0"}
+                        resp = requests.get(img_url, timeout=15, headers=headers)
                         if resp.status_code == 200:
                             product.image.save(f"{slug}.jpg", ContentFile(resp.content), save=True)
                     except Exception as e:
@@ -231,8 +272,9 @@ class Command(BaseCommand):
             for p in missing:
                 try:
                     # Use product-specific image URL
-                    img_url = get_product_image_url(p.name)
-                    resp = requests.get(img_url, timeout=15)
+                    img_url = get_product_image_url(p.name, p.slug)
+                    headers = {"User-Agent": "TechStoreSeeder/1.0"}
+                    resp = requests.get(img_url, timeout=15, headers=headers)
                     if resp.status_code == 200:
                         p.image.save(f"{p.slug}.jpg", ContentFile(resp.content), save=True)
                 except Exception as e:

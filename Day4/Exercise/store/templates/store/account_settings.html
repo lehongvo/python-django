@@ -156,6 +156,15 @@
                 </button>
             </div>
         </form>
+
+        <!-- Danger Zone -->
+        <div class="mt-10 bg-white rounded-2xl shadow-lg p-8 border border-red-100">
+            <h2 class="text-xl font-bold text-red-600 mb-3"><i class="fas fa-exclamation-triangle mr-2"></i>Danger Zone</h2>
+            <p class="text-gray-600 mb-4">Delete your account and all associated data. This action is permanent and requires email OTP confirmation.</p>
+            <a href="{% url 'store:delete_account_request' %}" class="inline-flex items-center px-5 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700">
+                <i class="fas fa-user-slash mr-2"></i> Delete My Account
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
