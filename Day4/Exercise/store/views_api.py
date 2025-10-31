@@ -1,10 +1,13 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, action, authentication_classes, permission_classes
+from rest_framework.decorators import api_view, action, authentication_classes, permission_classes, throttle_classes
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.permissions import AllowAny
 from rest_framework.authentication import SessionAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .authentication import CookieJWTAuthentication
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .permissions import ApiKeyPermission
 from django.shortcuts import get_object_or_404
 from .models import Product, Category, Order, OrderItem, Customer, Cart
 from .serializers import (
@@ -58,7 +61,7 @@ def _get_or_create_customer_for_user(user):
 class ProductViewSet(viewsets.ModelViewSet):
     """Product API ViewSet"""
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [ApiKeyPermission, IsAuthenticatedOrReadOnly]
     queryset = Product.objects.select_related('category').prefetch_related('tags')
     
     def get_queryset(self):
@@ -110,7 +113,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     """Category API ViewSet"""
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [ApiKeyPermission, IsAuthenticatedOrReadOnly]
     authentication_classes = [JWTAuthentication, SessionAuthentication]
     queryset = Category.objects.filter(is_active=True)
     
@@ -124,7 +127,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['POST'])
+@throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
 def add_to_cart(request):
     """Add product to shopping cart"""
     # Check if user is authenticated
@@ -184,9 +189,14 @@ def add_to_cart(request):
         'total': float(product.price) * cart_item.quantity
     })
 
+# throttle scope
+add_to_cart.throttle_scope = 'cart'
+
 
 @api_view(['POST'])
+@throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
 def buy_now(request):
     """Buy product immediately"""
     # Check if user is authenticated
@@ -232,8 +242,12 @@ def buy_now(request):
         'redirect': f'/checkout/?product={product_id}&quantity={quantity}'
     })
 
+buy_now.throttle_scope = 'buy'
+
 
 @api_view(['GET'])
+@permission_classes([ApiKeyPermission, AllowAny])
+@throttle_classes([ScopedRateThrottle])
 def order_detail(request, order_number):
     """Get order details by order number"""
     try:
@@ -247,9 +261,13 @@ def order_detail(request, order_number):
     serializer = OrderSerializer(order)
     return Response(serializer.data)
 
+order_detail.throttle_scope = 'order'
+
 
 @api_view(['POST'])
+@throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
 def cart_sync(request):
     """Sync cart from localStorage to database"""
     if not request.user.is_authenticated:
@@ -281,17 +299,25 @@ def cart_sync(request):
     
     return Response({'message': 'Cart synced successfully'})
 
+cart_sync.throttle_scope = 'cart'
+
 
 @api_view(['POST'])
+@throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
 def cart_clear(request):
     """Clear cart for logged out user"""
     # Clear localStorage on client
     return Response({'message': 'Cart cleared'})
 
+cart_clear.throttle_scope = 'cart'
+
 
 @api_view(['GET'])
+@throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
 def cart_list(request):
     """Return current user's cart items from database"""
     if not request.user.is_authenticated:
@@ -326,9 +352,13 @@ def cart_list(request):
         'subtotal': subtotal,
     })
 
+cart_list.throttle_scope = 'cart'
+
 
 @api_view(['POST'])
+@throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
 def cart_update(request):
     """Set quantity for a cart item in DB (add/update/remove)."""
     if not request.user.is_authenticated:
@@ -357,9 +387,13 @@ def cart_update(request):
 
     return Response({'message': 'Cart updated', 'quantity': cart_item.quantity})
 
+cart_update.throttle_scope = 'cart'
+
 
 @api_view(['POST'])
+@throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
 def cart_remove(request):
     """Remove an item from the cart in DB."""
     if not request.user.is_authenticated:
@@ -378,4 +412,6 @@ def cart_remove(request):
 
     Cart.objects.filter(customer=customer, product=product).delete()
     return Response({'message': 'Item removed'})
+
+cart_remove.throttle_scope = 'cart'
 

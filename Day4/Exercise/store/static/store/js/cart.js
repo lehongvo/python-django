@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .finally(() => {
                     self.disabled = false;
                     self.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add';
-                });
+            });
         });
     });
     

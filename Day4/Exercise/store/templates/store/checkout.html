@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     let subtotal = 0;
     let html = '';
     for (const item of cart) {
-        try {
+    try {
             const res = await fetch(`/api/products/${item.product_id}/`);
             const p = await res.json();
             const itemSubtotal = parseFloat(p.price) * item.quantity;

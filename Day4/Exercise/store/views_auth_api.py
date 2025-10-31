@@ -1,5 +1,7 @@
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes, throttle_classes
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from .permissions import ApiKeyPermission
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -12,7 +14,8 @@ from .models import Customer
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([ApiKeyPermission, AllowAny])
+@throttle_classes([ScopedRateThrottle])
 def register_api(request):
     """Register a new user and return minimal profile info."""
     username = request.data.get('username', '').strip()
@@ -59,10 +62,13 @@ def register_api(request):
         }
     }, status=status.HTTP_201_CREATED)
 
+# Set ScopedRateThrottle scope for function-based view
+register_api.throttle_scope = 'auth'
+
 
 @api_view(['GET'])
 @authentication_classes([JWTAuthentication, SessionAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([ApiKeyPermission, IsAuthenticated])
 def me_api(request):
     """Return current user profile with linked customer info."""
     user = request.user

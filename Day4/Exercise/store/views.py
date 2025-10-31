@@ -19,6 +19,7 @@ import random
 from datetime import timedelta
 from .models import EmailOTP
 from django.views.decorators.csrf import csrf_exempt
+from django.core.cache import cache
 import os
 import secrets
 
@@ -33,6 +34,14 @@ def _get_eth_account():
 
 def web3_challenge(request):
     """Issue a one-time nonce for MetaMask signature."""
+    # Simple rate limit: 20/min per IP
+    ip = request.META.get('REMOTE_ADDR', 'unknown')
+    key = f"rl:auth:challenge:{ip}"
+    count = cache.get(key, 0)
+    if count >= 20:
+        return JsonResponse({'error': 'Too many requests'}, status=429)
+    cache.set(key, count + 1, 60)
+
     nonce = secrets.token_hex(16)
     request.session['web3_nonce'] = nonce
     return JsonResponse({'nonce': nonce})
@@ -45,6 +54,13 @@ def web3_verify(request):
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid method'}, status=405)
+    # Simple rate limit: 20/min per IP
+    ip = request.META.get('REMOTE_ADDR', 'unknown')
+    key = f"rl:auth:verify:{ip}"
+    count = cache.get(key, 0)
+    if count >= 20:
+        return JsonResponse({'error': 'Too many requests'}, status=429)
+    cache.set(key, count + 1, 60)
     import json as _json
     try:
         data = _json.loads(request.body or '{}')
@@ -800,6 +816,14 @@ def subscribe(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid method'}, status=405)
 
+    # Rate limit: 20/min per IP
+    ip = request.META.get('REMOTE_ADDR', 'unknown')
+    key = f"rl:subscribe:{ip}"
+    count = cache.get(key, 0)
+    if count >= 20:
+        return JsonResponse({'error': 'Too many requests'}, status=429)
+    cache.set(key, count + 1, 60)
+
     email = request.POST.get('email') or (request.headers.get('Content-Type','').startswith('application/json') and __import__('json').loads(request.body or '{}').get('email'))
     if not email:
         return JsonResponse({'error': 'Email is required'}, status=400)
@@ -888,4 +912,4 @@ def delete_account_confirm(request):
         response = redirect('store:home')
         response.delete_cookie('access_token', path='/')
         response.delete_cookie('refresh_token', path='/')
-        return response
+    return response

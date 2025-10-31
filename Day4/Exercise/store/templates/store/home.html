@@ -30,15 +30,15 @@
                 <p class="text-xl md:text-2xl text-gray-100 max-w-2xl">
                     Discover exceptional quality products with unbeatable prices. 
                     Fast shipping, secure checkout, and 24/7 support.
-                </p>
+            </p>
                 
                 <div class="flex flex-col sm:flex-row gap-4">
                     <a href="{% url 'store:product_list' %}" class="bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-2xl flex items-center justify-center">
                         <i class="fas fa-shopping-bag mr-3"></i>Shop Now
-                    </a>
+                </a>
                     <a href="{% url 'store:category_list' %}" class="bg-white bg-opacity-10 backdrop-blur-sm border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-opacity-20 transition-all flex items-center justify-center">
                         <i class="fas fa-th-large mr-3"></i>Browse Categories
-                    </a>
+                </a>
                 </div>
                 
                 <!-- Trust Indicators -->
@@ -583,7 +583,7 @@ document.getElementById('newsletter-form').addEventListener('submit', function(e
         const data = await res.json().catch(()=>({}));
         if (res.ok) {
             messageDiv.innerHTML = '<div class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-check-circle mr-2"></i>' + (data.message || 'Thanks for subscribing!') + '</div>';
-            document.getElementById('newsletter-email').value = '';
+        document.getElementById('newsletter-email').value = '';
         } else {
             messageDiv.innerHTML = '<div class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-exclamation-circle mr-2"></i>' + (data.error || 'Subscription failed') + '</div>';
         }

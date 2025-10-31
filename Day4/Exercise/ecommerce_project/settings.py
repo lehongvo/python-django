@@ -47,14 +47,32 @@ CORS_ALLOW_CREDENTIALS = True
 
 # DRF settings
 REST_FRAMEWORK = {
+    # Default to authenticated APIs; explicitly open public ones per-view
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'store.permissions.ApiKeyPermission',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'store.authentication.CookieJWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    # Global throttling (additional per-view scopes below)
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/min',
+        'user': '300/min',
+        # Scoped throttles
+        'auth': '20/min',          # login/register/token/web3
+        'otp': '5/min',            # OTP send/verify
+        'subscribe': '20/min',     # newsletter
+        'cart': '120/min',         # cart operations
+        'order': '30/min',         # order lookups
+    },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20
 }
@@ -173,4 +191,20 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {'fields': 'id, name, email'}
 
 LOGIN_REDIRECT_URL = '/account/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Security headers & cookie hardening
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+X_FRAME_OPTIONS = 'DENY'
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Global API key (fallback to provided value; override via env in production)
+GLOBAL_API_KEY = os.environ.get('GLOBAL_API_KEY', '0x00000FC78106799b5b1dbD71f206d8f0218B28fe')
 
