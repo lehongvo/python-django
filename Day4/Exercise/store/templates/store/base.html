@@ -200,6 +200,9 @@
                 min-width: 44px;
             }
         }
+        /* Ensure icon-only controls meet touch target size */
+        .icon-btn { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+        .icon-link { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
         
         /* Responsive Images */
         img {
@@ -289,6 +292,19 @@
                 min-height: 44px;
                 padding: 0.5rem 1rem;
             }
+        }
+
+        /* Focus visibility and outlines for keyboard users */
+        :focus-visible {
+            outline: 3px solid var(--primary);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(99,102,241,.25);
+        }
+        .focus-ring:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
+        /* Respect user motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
         }
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 16px;
@@ -402,53 +418,34 @@
             </div>
         </div>
         
-        <!-- Main Navigation -->
+        <!-- Main Navigation (Redesigned) -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <!-- Logo -->
-                <div class="flex items-center">
+            <div class="h-16 flex items-center">
+                <div class="w-full flex items-center justify-between gap-4">
+                    <!-- Left: Brand -->
                     <a href="{% url 'store:home' %}" class="flex items-center space-x-3 group">
-                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <i class="fas fa-store text-white text-lg"></i>
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                            <i class="fas fa-store" aria-hidden="true"></i>
                         </div>
-                        <div>
-                            <span class="text-xl font-bold text-gray-900">{{ site_name }}</span>
-                            <div class="text-xs text-gray-500">Premium Shopping</div>
+                        <div class="leading-tight">
+                            <span class="block text-lg font-extrabold text-gray-900 tracking-tight">{{ site_name }}</span>
+                            <span class="block text-[11px] text-gray-500">Premium Shopping</span>
                         </div>
                     </a>
-                </div>
-                
-                <!-- Desktop Navigation -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="{% url 'store:home' %}" class="nav-link text-gray-600 hover:text-blue-600 text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'home' %}text-blue-600 font-semibold{% endif %}">
-                        <i class="fas fa-home mr-1"></i>Home
-                    </a>
-                    <a href="{% url 'store:product_list' %}" class="nav-link text-gray-600 hover:text-blue-600 text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'product_list' %}text-blue-600 font-semibold{% endif %}">
-                        <i class="fas fa-box mr-1"></i>Products
-                    </a>
-                    <a href="{% url 'store:category_list' %}" class="nav-link text-gray-600 hover:text-blue-600 text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'category_list' %}text-blue-600 font-semibold{% endif %}">
-                        <i class="fas fa-th-large mr-1"></i>Categories
-                    </a>
-                    <a href="{% url 'store:order_tracking' %}" class="nav-link text-gray-600 hover:text-blue-600 text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'order_tracking' %}text-blue-600 font-semibold{% endif %}">
-                        <i class="fas fa-truck mr-1"></i>Track Order
-                    </a>
-                </div>
-                
-                <!-- Right Side -->
-                <div class="flex items-center space-x-4">
-                    <!-- Search -->
-                    <form action="{% url 'store:product_list' %}" method="get" class="hidden lg:block">
-                        <div class="relative group flex items-center bg-white rounded-full border border-gray-200 shadow-sm overflow-hidden">
-                            <div class="pl-4 text-gray-400"><i class="fas fa-search"></i></div>
-                            <input type="text" name="search" placeholder="Search for phones, laptops, printers..." 
-                                   class="w-72 px-3 py-2 text-sm focus:outline-none" list="search_suggestions">
-                            <select name="category" class="px-3 py-2 text-sm border-l bg-gray-50 focus:outline-none">
+
+                    <!-- Center: Search -->
+                    <form action="{% url 'store:product_list' %}" method="get" class="hidden md:block flex-1 max-w-3xl">
+                        <div class="flex items-center bg-white rounded-full border border-gray-200 shadow-sm overflow-hidden">
+                            <span class="pl-4 text-gray-400"><i class="fas fa-search" aria-hidden="true"></i></span>
+                            <input type="text" name="search" placeholder="Search for phones, laptops, printers.." class="flex-1 px-3 py-2 text-sm focus:outline-none" list="search_suggestions">
+                            <span class="h-6 w-px bg-gray-200"></span>
+                            <select name="category" class="px-3 py-2 text-sm bg-white focus:outline-none">
                                 <option value="">All</option>
                                 {% for cat in navigation_categories %}
                                 <option value="{{ cat.slug }}">{{ cat.name }}</option>
                                 {% endfor %}
                             </select>
-                            <button type="submit" class="ml-auto bg-indigo-600 text-white px-4 py-2 text-sm font-semibold hover:bg-indigo-700 transition-colors">Search</button>
+                            <button type="submit" class="ml-2 mr-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold rounded-full">Search</button>
                         </div>
                         <datalist id="search_suggestions">
                             <option value="iPhone"></option>
@@ -457,36 +454,38 @@
                             <option value="Router"></option>
                         </datalist>
                     </form>
-                    
-                    <!-- Icons Group -->
-                    <div class="flex items-center space-x-4">
-                    
-                    <!-- Cart -->
-                        <a href="{% url 'store:cart' %}" class="relative text-gray-600 hover:text-blue-600 transition-colors group">
-                            <i class="fas fa-shopping-cart text-lg group-hover:scale-110 transition-transform"></i>
-                            <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold cart-badge" style="{% if cart_count|default:0 %}{% else %}display:none;{% endif %}">{{ cart_count|default:0 }}</span>
-                    </a>
-                    
-                    <!-- User Menu -->
-                        <a href="{% url 'store:account' %}" class="text-gray-600 hover:text-blue-600 transition-colors group">
-                            <i class="fas fa-user-circle text-lg group-hover:scale-110 transition-transform"></i>
-                    </a>
-                    
-                    <!-- Admin Link -->
+
+                    <!-- Right: Actions -->
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <a href="{% url 'store:product_list' %}" class="hidden lg:inline-flex items-center text-gray-600 hover:text-blue-600 text-sm font-medium px-3 py-2 rounded-lg focus-ring">
+                            <i class="fas fa-box mr-2" aria-hidden="true"></i>Products
+                        </a>
+                        <a href="{% url 'store:category_list' %}" class="hidden lg:inline-flex items-center text-gray-600 hover:text-blue-600 text-sm font-medium px-3 py-2 rounded-lg focus-ring">
+                            <i class="fas fa-th-large mr-2" aria-hidden="true"></i>Categories
+                        </a>
+                        <a href="{% url 'store:order_tracking' %}" class="hidden xl:inline-flex items-center text-gray-600 hover:text-blue-600 text-sm font-medium px-3 py-2 rounded-lg focus-ring">
+                            <i class="fas fa-truck mr-2" aria-hidden="true"></i>Track
+                        </a>
+                        <a href="{% url 'store:cart' %}" class="relative text-gray-700 hover:text-indigo-600 transition-colors icon-link focus-ring" aria-label="Cart">
+                            <i class="fas fa-shopping-cart text-lg" aria-hidden="true"></i>
+                            <span class="absolute -top-2 -right-2 bg-indigo-600 text-white text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-bold cart-badge" style="{% if cart_count|default:0 %}{% else %}display:none;{% endif %}">{{ cart_count|default:0 }}</span>
+                        </a>
+                        <a href="{% url 'store:account' %}" class="text-gray-700 hover:text-indigo-600 icon-link focus-ring" aria-label="Account">
+                            <i class="fas fa-user-circle text-lg" aria-hidden="true"></i>
+                        </a>
                         {% if request.user.is_authenticated and request.user.is_staff %}
-                        <a href="/admin/" class="text-gray-600 hover:text-purple-600 transition-colors group">
-                            <i class="fas fa-cog text-lg group-hover:rotate-90 transition-transform"></i>
-                    </a>
+                        <a href="/admin/" class="text-gray-700 hover:text-purple-600 icon-link focus-ring" aria-label="Admin">
+                            <i class="fas fa-cog text-lg" aria-hidden="true"></i>
+                        </a>
                         {% endif %}
-                    
-                    <!-- Mobile Menu Button -->
-                        <button class="md:hidden text-gray-600 hover:text-blue-600 transition-colors" onclick="toggleMobileMenu()">
-                        <i class="fas fa-bars text-lg"></i>
-                    </button>
+                        <button class="md:hidden text-gray-700 hover:text-indigo-600 icon-btn focus-ring" onclick="toggleMobileMenu()" aria-label="Open menu">
+                            <i class="fas fa-bars text-lg" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="h-[2px] bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600"></div>
         
         <!-- Mobile Menu -->
         <div id="mobileMenu" class="mobile-menu md:hidden fixed inset-y-0 left-0 w-64 bg-white shadow-lg z-50">
@@ -498,8 +497,8 @@
                         </div>
                         <span class="text-xl font-bold text-gray-900">TechStore</span>
                     </div>
-                    <button onclick="toggleMobileMenu()" class="p-2 text-gray-700 hover:text-indigo-600">
-                        <i class="fas fa-times text-lg"></i>
+                    <button onclick="toggleMobileMenu()" class="p-2 text-gray-700 hover:text-indigo-600 focus-ring icon-btn" aria-label="Close menu">
+                        <i class="fas fa-times text-lg" aria-hidden="true"></i>
                     </button>
                 </div>
                 
@@ -508,6 +507,12 @@
                     <a href="{% url 'store:product_list' %}" class="block text-gray-700 hover:text-indigo-600 font-medium py-2">Products</a>
                     <a href="{% url 'store:category_list' %}" class="block text-gray-700 hover:text-indigo-600 font-medium py-2">Categories</a>
                     <a href="{% url 'store:order_tracking' %}" class="block text-gray-700 hover:text-indigo-600 font-medium py-2">Track Order</a>
+                    <!-- Mobile Search -->
+                    <form action="{% url 'store:product_list' %}" method="get" class="mt-4">
+                        <label for="msearch" class="sr-only">Search products</label>
+                        <input id="msearch" name="search" type="text" placeholder="Search products..." class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2" />
+                        <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold">Search</button>
+                    </form>
                 </nav>
             </div>
         </div>
