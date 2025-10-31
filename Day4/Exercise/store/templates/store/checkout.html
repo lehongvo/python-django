@@ -36,6 +36,7 @@
                     
                     <form id="checkout-form" class="space-y-6">
                         {% csrf_token %}
+                        <input type="hidden" name="shipping_method" id="shipping_method" value="standard">
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -108,7 +109,7 @@
                     
                     <div class="space-y-4">
                         <label class="flex items-center p-4 border-2 border-indigo-600 rounded-xl cursor-pointer hover:bg-indigo-50 transition-colors">
-                            <input type="radio" name="shipping" value="standard" checked class="mr-4">
+                            <input type="radio" name="shipping" value="standard" checked class="mr-4 ship-option">
                             <div class="flex-1">
                                 <div class="font-semibold text-gray-900">Standard Shipping</div>
                                 <div class="text-sm text-gray-600">5-7 business days - FREE</div>
@@ -117,7 +118,7 @@
                         </label>
                         
                         <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                            <input type="radio" name="shipping" value="express" class="mr-4">
+                            <input type="radio" name="shipping" value="express" class="mr-4 ship-option">
                             <div class="flex-1">
                                 <div class="font-semibold text-gray-900">Express Shipping</div>
                                 <div class="text-sm text-gray-600">2-3 business days</div>
@@ -180,6 +181,9 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
     
     const formData = new FormData(this);
     const button = document.querySelector('[type="submit"]');
+    // copy selected shipping to hidden input
+    const selectedShip = document.querySelector('input[name="shipping"]:checked');
+    document.getElementById('shipping_method').value = selectedShip ? selectedShip.value : 'standard';
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
     
@@ -241,12 +245,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (_) {}
     }
     if (wrapper) wrapper.innerHTML = html || '<div class="text-sm text-gray-500">Cart is empty. Go back to add products.</div>';
-    const tax = subtotal * 0.1;
-    const total = subtotal + tax;
-    const el = id => document.getElementById(id);
-    if (el('sum-subtotal')) el('sum-subtotal').textContent = `$${subtotal.toFixed(2)}`;
-    if (el('sum-tax')) el('sum-tax').textContent = `$${tax.toFixed(2)}`;
-    if (el('sum-total')) el('sum-total').textContent = `$${total.toFixed(2)}`;
+    const shipRadio = document.querySelectorAll('.ship-option');
+    function recompute(){
+        const shipVal = document.querySelector('input[name="shipping"]:checked')?.value || 'standard';
+        const shippingFee = shipVal === 'express' ? 15.00 : 0.00;
+        const tax = subtotal * 0.1;
+        const total = subtotal + tax + shippingFee;
+        const el = id => document.getElementById(id);
+        if (el('sum-subtotal')) el('sum-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+        if (el('sum-tax')) el('sum-tax').textContent = `$${tax.toFixed(2)}`;
+        if (el('sum-total')) el('sum-total').textContent = `$${total.toFixed(2)}`;
+        document.getElementById('shipping_method').value = shipVal;
+    }
+    shipRadio.forEach(r => r.addEventListener('change', recompute));
+    recompute();
 });
 </script>
 {% endblock %}

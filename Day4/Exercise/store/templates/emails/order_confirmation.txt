@@ -1,0 +1,20 @@
+Thanks for your purchase!
+
+Order: {{ order_number }}
+Shipping: {{ shipping_method }}
+Estimated delivery: {{ delivery_eta }}
+
+Items:
+{% for it in items %}
+- {{ it.name }} x {{ it.quantity }} — {{ it.price }}
+{% endfor %}
+
+Subtotal: {{ subtotal }}
+Shipping: {{ shipping_fee }}
+Tax (estimated): {{ tax }}
+Total: {{ total }}
+
+You'll receive another email when your order ships.
+- TechStore 2025
+
+

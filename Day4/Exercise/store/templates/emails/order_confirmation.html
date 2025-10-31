@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Order Confirmation</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background:#f6f7fb; color:#111827; }
+      .container { max-width:720px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,.08); }
+      .header { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; padding:24px; }
+      .content { padding:24px; }
+      .items { width:100%; border-collapse:collapse; }
+      .items th, .items td { padding:12px; border-bottom:1px solid #e5e7eb; text-align:left; font-size:14px; }
+      .items img { width:72px; height:54px; object-fit:cover; border-radius:8px; }
+      .totals { margin-top:16px; }
+      .totals table { width:100%; }
+      .totals td { padding:6px 0; font-size:14px; }
+      .totals .label { color:#6b7280; }
+      .totals .value { text-align:right; font-weight:600; }
+      .grand { font-size:18px; font-weight:800; }
+      .footer { color:#6b7280; font-size:12px; padding:16px 24px 24px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2 style="margin:0">Thanks for your purchase!</h2>
+        <div>Order <strong>{{ order_number }}</strong> — {{ shipping_method }} Shipping • ETA {{ delivery_eta }}</div>
+      </div>
+      <div class="content">
+        <p>Hi {{ customer.name|default:customer.email }},</p>
+        <p>We're preparing your order. Here are the details:</p>
+
+        <table class="items">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in items %}
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <img src="{{ it.image_url }}" alt="" />
+                  <div>{{ it.name }}</div>
+                </div>
+              </td>
+              <td>{{ it.quantity }}</td>
+              <td>{{ it.price }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <table>
+            <tr><td class="label">Subtotal</td><td class="value">{{ subtotal }}</td></tr>
+            <tr><td class="label">Shipping ({{ shipping_method }})</td><td class="value">{{ shipping_fee }}</td></tr>
+            <tr><td class="label">Tax (estimated)</td><td class="value">{{ tax }}</td></tr>
+            <tr><td class="grand">Total</td><td class="value grand">{{ total }}</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="footer">
+        You will receive another email once your order ships. If you have any questions, reply to this email.
+        <br/>— TechStore 2025
+      </div>
+    </div>
+  </body>
+ </html>
+
+

@@ -354,8 +354,11 @@ def checkout(request):
         
         # Calculate totals
         subtotal = sum(float(item['price']) * int(item['quantity']) for item in cart_items)
+        # Shipping method/fee
+        shipping_method = request.POST.get('shipping_method', 'standard')
+        shipping_fee = 0.0 if shipping_method == 'standard' else 9.99
         tax = subtotal * 0.1
-        grand_total = subtotal + tax
+        grand_total = subtotal + tax + shipping_fee
         
         # Generate order number
         from datetime import datetime
@@ -388,7 +391,43 @@ def checkout(request):
             except Product.DoesNotExist:
                 pass
         
-        messages.success(request, f'Order {order_number} placed successfully!')
+        # Send order confirmation email
+        try:
+            est_days = 5 if shipping_method == 'standard' else 2
+            from datetime import timedelta
+            delivery_eta = (timezone.now() + timedelta(days=est_days)).date()
+            email_ctx = {
+                'order_number': order_number,
+                'customer': customer,
+                'items': cart_items,
+                'subtotal': subtotal,
+                'tax': tax,
+                'shipping_fee': shipping_fee,
+                'total': grand_total,
+                'shipping_method': 'Express' if shipping_method != 'standard' else 'Standard',
+                'delivery_eta': delivery_eta,
+            }
+            # Build absolute URLs for images
+            for it in email_ctx['items']:
+                img = None
+                try:
+                    p = Product.objects.get(id=it['product_id'])
+                    if getattr(p, 'image', None) and p.image:
+                        img = request.build_absolute_uri(p.image.url)
+                except Exception:
+                    pass
+                it['image_url'] = img or f"https://picsum.photos/seed/{it.get('product_id','img')}/200/150"
+
+            subject = f'Your order {order_number} is confirmed — TechStore 2025'
+            html_body = render_to_string('emails/order_confirmation.html', email_ctx)
+            text_body = render_to_string('emails/order_confirmation.txt', email_ctx)
+            msg = EmailMultiAlternatives(subject, text_body, to=[customer.email])
+            msg.attach_alternative(html_body, 'text/html')
+            msg.send(fail_silently=True)
+        except Exception:
+            pass
+
+        messages.success(request, f'Order {order_number} placed successfully! A confirmation email has been sent.')
         
         # Redirect to tracking page with query param
         tracking_url = reverse('store:order_tracking') + f'?order_number={order_number}'
