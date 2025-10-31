@@ -14,6 +14,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('account/', views.account, name='account'),
     path('account/orders/', views.account_orders, name='account_orders'),
+    path('account/vouchers/', views.account_vouchers, name='account_vouchers'),
     path('account/settings/', views.account_settings, name='account_settings'),
     path('account/delete/request/', views.delete_account_request, name='delete_account_request'),
     path('account/delete/confirm/', views.delete_account_confirm, name='delete_account_confirm'),
@@ -24,6 +25,8 @@ urlpatterns = [
     path('auth/web3/verify/', views.web3_verify, name='web3_verify'),
     path('auth/web3/complete/', views.web3_complete, name='web3_complete'),
     path('track-order/', views.order_tracking, name='order_tracking'),
+    # User promo codes API (unused only)
+    path('api/my/unused-promos/', views.my_unused_promos_api, name='my_unused_promos_api'),
     # Support pages
     path('support/help-center/', views.help_center, name='help_center'),
     path('support/contact/', views.contact_us, name='contact_us'),

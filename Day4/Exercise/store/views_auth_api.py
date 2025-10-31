@@ -11,7 +11,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .serializers import CustomerSerializer
 from .models import Customer
-from .utils import assign_welcome_promo_and_email
+from .utils import assign_welcome_promo_and_email, claim_unused_promos
 
 
 @api_view(['POST'])
@@ -54,9 +54,9 @@ def register_api(request):
         customer.user = user
         customer.save(update_fields=['user'])
 
-    # Assign welcome promo and send email
+    # Assign welcome promos (8) and send email
     try:
-        assign_welcome_promo_and_email(user)
+        assign_welcome_promo_and_email(user, count=8)
     except Exception:
         pass
 

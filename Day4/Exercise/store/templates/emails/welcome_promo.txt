@@ -1,11 +1,16 @@
 Welcome to TechStore!
 
 Hi {{ user.get_full_name|default:user.username }}, thanks for joining TechStore.
+{% if promos and promos|length > 1 %}
+We’ve reserved {{ promos|length }} personal promo codes for you:
+{% for p in promos %}- Code: {{ p.code }} — {{ p.amount }}%
+{% endfor %}
+Use one code per order. Each code is single-use.
+{% else %}
 Here is your personal promo code worth {{ discount }}% off on your next order:
-
 Code: {{ promo_code }}
-
 Apply it at checkout. One-time use per account. Terms may apply.
+{% endif %}
 
 Start shopping: http://localhost:8001/products/
 

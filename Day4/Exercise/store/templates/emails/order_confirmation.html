@@ -72,6 +72,9 @@
             <tr><td class="label">Subtotal</td><td class="value">$ {{ subtotal|floatformat:2 }}</td></tr>
             <tr><td class="label">Shipping ({{ shipping_method }})</td><td class="value">$ {{ shipping_fee|floatformat:2 }}</td></tr>
             <tr><td class="label">Tax (estimated)</td><td class="value">$ {{ tax|floatformat:2 }}</td></tr>
+            {% if promo_code %}
+            <tr><td class="label">Discount ({{ promo_code }} – {{ promo_amount }}%)</td><td class="value" style="color:#059669">- $ {{ discount_amount|floatformat:2 }}</td></tr>
+            {% endif %}
             <tr><td class="grand">Total</td><td class="value grand">$ {{ total|floatformat:2 }}</td></tr>
           </table>
         </div>

@@ -4,6 +4,9 @@ Provides global data to all templates
 """
 
 
+from django.conf import settings
+
+
 def site_settings(request):
     """Provide global site settings to all templates"""
     return {
@@ -13,6 +16,7 @@ def site_settings(request):
         'company_email': 'support@techstore.com',
         'company_phone': '1-800-TECHSTORE',
         'company_address': '123 Tech Avenue, San Francisco, CA 94103',
+        'global_api_key': getattr(settings, 'GLOBAL_API_KEY', ''),
     }
 
 

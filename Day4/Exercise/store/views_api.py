@@ -3,6 +3,9 @@ from rest_framework.decorators import api_view, action, authentication_classes, 
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.permissions import AllowAny
 from rest_framework.authentication import SessionAuthentication
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # disable CSRF checks for this auth
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .authentication import CookieJWTAuthentication
 from rest_framework.response import Response
@@ -16,6 +19,7 @@ from .serializers import (
     OrderSerializer, OrderItemSerializer
 )
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
 
 
 def _get_or_create_customer_for_user(user):
@@ -129,7 +133,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 @api_view(['POST'])
 @throttle_classes([ScopedRateThrottle])
-@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, CsrfExemptSessionAuthentication])
 @permission_classes([ApiKeyPermission])
 def add_to_cart(request):
     """Add product to shopping cart"""
@@ -496,6 +500,7 @@ def promo_mine(request):
         return Response({'promo_code': None})
     return Response({'promo_code': obj.promo_code, 'promo_amount': obj.promo_amount, 'is_used': obj.is_used})
 
+@csrf_exempt
 @api_view(['POST'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])

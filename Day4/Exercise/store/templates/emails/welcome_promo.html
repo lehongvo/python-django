@@ -1,9 +1,32 @@
 <div style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width:640px; margin:0 auto; padding:24px; color:#111827;">
   <h2 style="margin:0 0 12px;">Welcome to TechStore 🎉</h2>
   <p style="margin:0 0 16px;">Hi {{ user.get_full_name|default:user.username }}, thanks for joining TechStore!</p>
+  {% if promos and promos|length > 1 %}
+  <p style="margin:0 0 8px;">As a welcome gift, we’ve reserved <strong>{{ promos|length }}</strong> personal promo codes for you:</p>
+  <div style="margin:12px 0;">
+    <table cellspacing="0" cellpadding="0" style="width:100%; font-size:14px; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th align="left" style="padding:8px 6px; color:#6B7280;">Code</th>
+          <th align="right" style="padding:8px 6px; color:#6B7280;">Discount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in promos %}
+        <tr>
+          <td style="padding:8px 6px; font-weight:600; background:#F9FAFB; border-radius:8px;">{{ p.code }}</td>
+          <td align="right" style="padding:8px 6px; font-weight:600; color:#059669;">{{ p.amount }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p style="margin:0 0 16px; color:#4B5563;">Use one code per order. Codes are single-use.</p>
+  {% else %}
   <p style="margin:0 0 8px;">Here is your personal promo code worth <strong>{{ discount }}% off</strong> on your next order:</p>
   <div style="margin:16px 0; padding:14px 16px; background:#EEF2FF; border:1px dashed #6366F1; border-radius:12px; font-weight:700; font-size:18px; text-align:center; letter-spacing:1px;">{{ promo_code }}</div>
   <p style="margin:0 0 16px; color:#4B5563;">Apply it at checkout. One-time use per account. Terms may apply.</p>
+  {% endif %}
   <a href="{{ request.build_absolute_uri|default:'http://localhost:8001/products/' }}" style="display:inline-block; background:#4F46E5; color:#fff; text-decoration:none; padding:12px 16px; border-radius:10px;">Start shopping</a>
   <p style="margin-top:24px; font-size:12px; color:#6B7280;">If you didn’t create an account, you can ignore this email.</p>
 </div>

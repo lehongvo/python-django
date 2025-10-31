@@ -18,7 +18,7 @@ from django.core.mail import send_mail
 import random
 from datetime import timedelta
 from .models import EmailOTP
-from .utils import assign_welcome_promo_and_email
+from .utils import assign_welcome_promo_and_email, claim_unused_promos
 from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 import os
@@ -366,7 +366,7 @@ def checkout(request):
         if promo_code:
             qs = PromoCode.objects.filter(promo_code=promo_code, is_used=False)
             if request.user.is_authenticated:
-                qs = qs.filter(models.Q(user__isnull=True) | models.Q(user=request.user))
+                qs = qs.filter(Q(user__isnull=True) | Q(user=request.user))
             else:
                 qs = qs.filter(user__isnull=True)
             promo_obj = qs.first()
@@ -420,6 +420,7 @@ def checkout(request):
                 'total': grand_total,
                 'promo_code': promo_obj.promo_code if promo_obj else None,
                 'promo_amount': promo_obj.promo_amount if promo_obj else None,
+                'discount_amount': discount_amount if promo_obj else 0.0,
                 'shipping_method': 'Express' if shipping_method != 'standard' else 'Standard',
                 'delivery_eta': delivery_eta,
                 'order': order,
@@ -516,7 +517,7 @@ def user_login(request):
         if user is not None:
             login(request, user)
             messages.success(request, f'Welcome back, {username}!')
-
+            
             # Issue JWT tokens and set cookies
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
@@ -546,10 +547,19 @@ def user_login(request):
                 samesite='Lax',
                 path='/',
             )
-            # First login welcome promo if none assigned yet
+            # Ensure user has at least 8 promo codes on first login/new email
             try:
-                if not getattr(user, 'promo_codes', None) or not user.promo_codes.exists():
-                    assign_welcome_promo_and_email(user)
+                existing = 0
+                try:
+                    existing = user.promo_codes.count()
+                except Exception:
+                    existing = 0
+                if existing <= 0:
+                    # First time → mint 8 and send welcome email with codes
+                    assign_welcome_promo_and_email(user, count=8)
+                elif existing < 8:
+                    # Top up silently to 8 (no email spam). Cron will raise to 10 later.
+                    claim_unused_promos(user, 8 - existing)
             except Exception:
                 pass
             return response
@@ -675,9 +685,9 @@ def register(request):
                         record.is_used = True
                         record.save(update_fields=['is_used'])
 
-                        # Assign welcome promo and email
+                        # Assign welcome promos (8) and email
                         try:
-                            assign_welcome_promo_and_email(created_user)
+                            assign_welcome_promo_and_email(created_user, count=8)
                         except Exception:
                             pass
 
@@ -852,6 +862,25 @@ def account_orders(request):
     return render(request, 'store/account_orders.html', context)
 
 
+def account_vouchers(request):
+    """User vouchers page"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to view your vouchers.')
+        return redirect('store:user_login')
+
+    user = request.user
+    vouchers = PromoCode.objects.filter(user=user).order_by('-created_at')
+    used_count = vouchers.filter(is_used=True).count()
+    unused_count = vouchers.filter(is_used=False).count()
+
+    context = {
+        'user': user,
+        'vouchers': vouchers,
+        'used_count': used_count,
+        'unused_count': unused_count,
+    }
+    return render(request, 'store/account_vouchers.html', context)
+
 def cart(request):
     """Shopping cart page"""
     return render(request, 'store/cart.html')
@@ -871,7 +900,7 @@ def logout_view(request):
 def order_tracking(request):
     """Order tracking page"""
     order_number = request.GET.get('order_number', '')
-
+    
     # If no order number provided, default to the user's most recent order
     if not order_number and request.user.is_authenticated:
         try:
@@ -901,6 +930,23 @@ def order_tracking(request):
         'order_number': order_number,
     }
     return render(request, 'store/order_tracking.html', context)
+
+
+from django.http import JsonResponse
+
+def my_unused_promos_api(request):
+    """Return the current user's unused promo codes as JSON.
+    Used by checkout promo picker. Returns empty list if not authenticated.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'promos': []})
+    codes = (
+        PromoCode.objects
+        .filter(user=request.user, is_used=False)
+        .order_by('-created_at')
+        .values('promo_code', 'promo_amount')
+    )
+    return JsonResponse({'promos': list(codes)})
 
 
 # Support pages

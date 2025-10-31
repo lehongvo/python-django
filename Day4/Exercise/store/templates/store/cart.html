@@ -62,6 +62,10 @@
                                 <span>Tax (estimated)</span>
                                 <span class="font-semibold" id="tax">$0.00</span>
                             </div>
+                            <div class="flex justify-between text-gray-700 hidden" id="discount-row">
+                                <span>Discount</span>
+                                <span class="font-semibold text-green-600" id="discount">-$0.00</span>
+                            </div>
                             <div class="flex justify-between text-2xl font-black text-gray-900 pt-2 border-t border-gray-200">
                                 <span>Total</span>
                                 <span class="text-indigo-600" id="grand-total">$0.00</span>
@@ -106,6 +110,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
+    // Require fresh Apply action each visit to Cart
+    try { sessionStorage.removeItem('promo_applied'); } catch(_){}
     // Prefer server-side cart if logged in
     try {
         const res = await fetch('/api/cart/list/', { credentials: 'include' });
@@ -188,16 +194,29 @@ async function displayCart(cart) {
     cartItemsDiv.innerHTML = html;
     
     const tax = subtotal * 0.1;
-    // Apply promo if present in localStorage
+    // Apply promo only if user clicked Apply in this session
     const applied = JSON.parse(localStorage.getItem('applied_promo') || 'null');
+    const promoAppliedThisSession = sessionStorage.getItem('promo_applied') === '1';
     let discount = 0;
-    if (applied && applied.promo_amount) {
-        discount = (subtotal + tax) * (applied.promo_amount / 100.0);
+    if (promoAppliedThisSession && applied && applied.promo_amount) {
+        const promoPercent = Number(applied.promo_amount);
+        if (!Number.isNaN(promoPercent) && promoPercent > 0) {
+            discount = (subtotal + tax) * (promoPercent / 100.0);
+        }
     }
     const grandTotal = subtotal + tax - discount;
     
     document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
     document.getElementById('tax').textContent = '$' + tax.toFixed(2);
+    const discountRow = document.getElementById('discount-row');
+    const discountEl = document.getElementById('discount');
+    if (discount > 0.0001) {
+        discountRow.classList.remove('hidden');
+        discountEl.textContent = '-$' + discount.toFixed(2);
+    } else {
+        discountRow.classList.add('hidden');
+        discountEl.textContent = '-$0.00';
+    }
     document.getElementById('grand-total').textContent = '$' + grandTotal.toFixed(2);
 }
 
@@ -226,28 +245,35 @@ document.addEventListener('click', async (e) => {
         const input = document.getElementById('promo-input');
         const code = (input.value || '').trim().toUpperCase();
         if (!code) {
-            toast('Please enter a promo code', 'error');
+            showNotification('Please enter a promo code', 'error');
             return;
         }
         try {
             const res = await fetch('/api/promos/validate/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Api-Key ${window.__TS_API_KEY__ || ''}`
+                },
                 credentials: 'include',
                 body: JSON.stringify({ promo_code: code })
             });
             const data = await res.json();
             if (!res.ok || data.valid === false) {
-                toast(data.error || 'Invalid promo code', 'error');
+                showNotification(data.error || 'Invalid promo code', 'error');
                 localStorage.removeItem('applied_promo');
                 displayCart(JSON.parse(localStorage.getItem('cart') || '[]'));
                 return;
             }
-            localStorage.setItem('applied_promo', JSON.stringify({ promo_code: data.promo_code, promo_amount: data.promo_amount }));
-            toast(`Applied ${data.promo_amount}% off`, 'success');
+            localStorage.setItem('applied_promo', JSON.stringify({ promo_code: data.promo_code, promo_amount: Number(data.promo_amount) }));
+            sessionStorage.setItem('promo_applied', '1');
+            showNotification(`Applied ${data.promo_amount}% off`, 'success');
             displayCart(JSON.parse(localStorage.getItem('cart') || '[]'));
         } catch (_) {
-            toast('Could not validate promo code', 'error');
+            showNotification('Could not validate promo code', 'error');
+            sessionStorage.removeItem('promo_applied');
+            localStorage.removeItem('applied_promo');
+            displayCart(JSON.parse(localStorage.getItem('cart') || '[]'));
         }
     }
 });

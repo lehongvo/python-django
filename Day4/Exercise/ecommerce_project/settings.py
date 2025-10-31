@@ -208,3 +208,22 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 # Global API key (fallback to provided value; override via env in production)
 GLOBAL_API_KEY = os.environ.get('GLOBAL_API_KEY', '0x00000FC78106799b5b1dbD71f206d8f0218B28fe')
 
+
+# Logging configuration: surface store.email logs to console
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'store.email': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+

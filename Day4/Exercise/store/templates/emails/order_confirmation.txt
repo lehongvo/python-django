@@ -15,6 +15,9 @@ Items:
 Subtotal: $ {{ subtotal|floatformat:2 }}
 Shipping: $ {{ shipping_fee|floatformat:2 }}
 Tax (estimated): $ {{ tax|floatformat:2 }}
+{% if promo_code %}
+Discount ({{ promo_code }} – {{ promo_amount }}%): - $ {{ discount_amount|floatformat:2 }}
+{% endif %}
 Total: $ {{ total|floatformat:2 }}
 
 Track your order: {{ track_url }}
