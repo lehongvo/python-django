@@ -73,10 +73,10 @@
                             <button class="px-3 py-2 bg-white rounded-lg border text-sm font-semibold hover:bg-gray-50">Apply</button>
                         </div>
                         
-                        <button id="checkout-btn" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-md">
+                        <a id="checkout-btn" href="/checkout/" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-md text-center block">
                             <i class="fas fa-lock mr-2"></i>
                             Proceed to Checkout
-                        </button>
+                        </a>
                         
                         <a href="{% url 'store:product_list' %}" class="block text-center text-gray-600 hover:text-indigo-600 mt-4">
                             <i class="fas fa-arrow-left mr-2"></i>
@@ -136,10 +136,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         displayCart(cart);
     }
 
-    document.getElementById('checkout-btn').addEventListener('click', function() {
-        // Go to checkout page (GET). Checkout will read localStorage and show payment options
-        window.location.href = '/checkout/';
-    });
+    // no JS needed; direct link ensures click always works
 });
 
 async function displayCart(cart) {

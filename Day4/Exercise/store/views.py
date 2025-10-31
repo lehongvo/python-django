@@ -406,12 +406,16 @@ def checkout(request):
                 'total': grand_total,
                 'shipping_method': 'Express' if shipping_method != 'standard' else 'Standard',
                 'delivery_eta': delivery_eta,
+                'order': order,
+                'track_url': request.build_absolute_uri(reverse('store:order_tracking') + f'?order_number={order_number}')
             }
             # Build absolute URLs for images
             for it in email_ctx['items']:
                 img = None
                 try:
                     p = Product.objects.get(id=it['product_id'])
+                    # enrich for email rendering
+                    it['name'] = getattr(p, 'name', it.get('name'))
                     if getattr(p, 'image', None) and p.image:
                         img = request.build_absolute_uri(p.image.url)
                 except Exception:
@@ -429,8 +433,16 @@ def checkout(request):
 
         messages.success(request, f'Order {order_number} placed successfully! A confirmation email has been sent.')
         
+        # Clear server-side cart for authenticated users
+        try:
+            if request.user.is_authenticated:
+                from .models import Cart
+                Cart.objects.filter(customer=customer).delete()
+        except Exception:
+            pass
+
         # Redirect to tracking page with query param
-        tracking_url = reverse('store:order_tracking') + f'?order_number={order_number}'
+        tracking_url = reverse('store:order_tracking') + f'?order_number={order_number}&cleared=1'
         return redirect(tracking_url)
     
     # GET - Show checkout page
@@ -662,7 +674,10 @@ def account(request):
         # Get user orders
         orders = []
         if customer:
-            orders = Order.objects.filter(customer=customer).order_by('-order_date')[:10]
+            orders = Order.objects.filter(customer=customer).order_by('-order_date')[:4]
+            pending_count = Order.objects.filter(customer=customer, status='processing').count()
+        else:
+            pending_count = 0
     else:
         # For non-authenticated users, show login prompt
         orders = []
@@ -673,6 +688,7 @@ def account(request):
         'user': user,
         'customer': customer,
         'orders': orders,
+        'pending_count': pending_count,
     }
     return render(request, 'store/account.html', context)
 
@@ -816,7 +832,22 @@ def logout_view(request):
 def order_tracking(request):
     """Order tracking page"""
     order_number = request.GET.get('order_number', '')
-    
+
+    # If no order number provided, default to the user's most recent order
+    if not order_number and request.user.is_authenticated:
+        try:
+            customer = Customer.objects.get(email=request.user.email)
+            latest = (
+                Order.objects
+                .filter(customer=customer)
+                .order_by('-order_date')
+                .first()
+            )
+            if latest:
+                order_number = latest.order_number
+        except Customer.DoesNotExist:
+            pass
+
     order = None
     if order_number:
         try:

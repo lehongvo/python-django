@@ -321,22 +321,22 @@
                             <!-- Actions -->
                             <div class="mt-auto product-actions">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <a href="{% url 'store:product_detail' product.slug %}"
+                                <a href="{% url 'store:product_detail' product.slug %}" 
                                        class="action-btn action-primary">
                                         <i class="fas fa-eye"></i>
                                         <span>View Details</span>
-                                    </a>
-                                    {% if product.is_in_stock %}
+                                </a>
+                                {% if product.is_in_stock %}
                                     <button type="button" class="action-btn action-secondary" data-add-to-cart data-product-id="{{ product.id }}" data-quantity="1">
-                                        <i class="fas fa-shopping-cart"></i>
+                                    <i class="fas fa-shopping-cart"></i>
                                         <span>Add</span>
-                                    </button>
-                                    {% else %}
+                                </button>
+                                {% else %}
                                     <button type="button" class="action-btn action-disabled" disabled>
-                                        <i class="fas fa-times"></i>
+                                    <i class="fas fa-times"></i>
                                         <span>Sold Out</span>
-                                    </button>
-                                    {% endif %}
+                                </button>
+                                {% endif %}
                                 </div>
                             </div>
                         </div>

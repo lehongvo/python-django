@@ -456,29 +456,29 @@
                     
                     <!-- Icons Group -->
                     <div class="flex items-center space-x-4">
-                        
-                        <!-- Cart -->
+                    
+                    <!-- Cart -->
                         <a href="{% url 'store:cart' %}" class="relative text-gray-600 hover:text-blue-600 transition-colors group">
                             <i class="fas fa-shopping-cart text-lg group-hover:scale-110 transition-transform"></i>
                             <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold cart-badge" style="{% if cart_count|default:0 %}{% else %}display:none;{% endif %}">{{ cart_count|default:0 }}</span>
-                        </a>
-                        
-                        <!-- User Menu -->
+                    </a>
+                    
+                    <!-- User Menu -->
                         <a href="{% url 'store:account' %}" class="text-gray-600 hover:text-blue-600 transition-colors group">
                             <i class="fas fa-user-circle text-lg group-hover:scale-110 transition-transform"></i>
-                        </a>
-                        
-                        <!-- Admin Link -->
+                    </a>
+                    
+                    <!-- Admin Link -->
                         {% if request.user.is_authenticated and request.user.is_staff %}
                         <a href="/admin/" class="text-gray-600 hover:text-purple-600 transition-colors group">
                             <i class="fas fa-cog text-lg group-hover:rotate-90 transition-transform"></i>
-                        </a>
+                    </a>
                         {% endif %}
-                        
-                        <!-- Mobile Menu Button -->
+                    
+                    <!-- Mobile Menu Button -->
                         <button class="md:hidden text-gray-600 hover:text-blue-600 transition-colors" onclick="toggleMobileMenu()">
-                            <i class="fas fa-bars text-lg"></i>
-                        </button>
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
                     </div>
                 </div>
             </div>
@@ -700,7 +700,7 @@
           if (!res.ok) throw new Error('Failed');
           const p = await res.json();
           setTimeout(() => {
-            window.location.href = `/product/${p.slug}/`;
+          window.location.href = `/product/${p.slug}/`;
           }, 500);
         } catch (e) {
           showNotification('Unable to open quick view', 'error');
@@ -725,7 +725,7 @@
               link.addEventListener('click', function(e) {
                   if (!this.href.includes('#') && !this.target) {
                       showNotification('Loading...', 'info');
-                  }
+      }
               });
           });
       });

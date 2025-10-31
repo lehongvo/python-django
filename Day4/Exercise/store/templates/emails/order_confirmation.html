@@ -30,6 +30,19 @@
         <p>Hi {{ customer.name|default:customer.email }},</p>
         <p>We're preparing your order. Here are the details:</p>
 
+        <div style="padding:12px 14px;margin:12px 0;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb">
+          <table width="100%" style="font-size:14px">
+            <tr>
+              <td style="color:#6b7280">Shipping to</td>
+              <td style="text-align:right;font-weight:600">{{ customer.name }}</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td style="text-align:right">{{ order.shipping_address }}, {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}, {{ order.shipping_country }}</td>
+            </tr>
+          </table>
+        </div>
+
         <table class="items">
           <thead>
             <tr>
@@ -48,7 +61,7 @@
                 </div>
               </td>
               <td>{{ it.quantity }}</td>
-              <td>{{ it.price }}</td>
+              <td>$ {{ it.price|floatformat:2 }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -56,16 +69,20 @@
 
         <div class="totals">
           <table>
-            <tr><td class="label">Subtotal</td><td class="value">{{ subtotal }}</td></tr>
-            <tr><td class="label">Shipping ({{ shipping_method }})</td><td class="value">{{ shipping_fee }}</td></tr>
-            <tr><td class="label">Tax (estimated)</td><td class="value">{{ tax }}</td></tr>
-            <tr><td class="grand">Total</td><td class="value grand">{{ total }}</td></tr>
+            <tr><td class="label">Subtotal</td><td class="value">$ {{ subtotal|floatformat:2 }}</td></tr>
+            <tr><td class="label">Shipping ({{ shipping_method }})</td><td class="value">$ {{ shipping_fee|floatformat:2 }}</td></tr>
+            <tr><td class="label">Tax (estimated)</td><td class="value">$ {{ tax|floatformat:2 }}</td></tr>
+            <tr><td class="grand">Total</td><td class="value grand">$ {{ total|floatformat:2 }}</td></tr>
           </table>
+        </div>
+
+        <div style="text-align:center;margin-top:16px">
+          <a href="{{ track_url }}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:700">Track your order</a>
         </div>
       </div>
       <div class="footer">
-        You will receive another email once your order ships. If you have any questions, reply to this email.
-        <br/>— TechStore 2025
+        You will receive another email once your order ships. If you have any questions, reply to this email or visit our Help Center.
+        <br/>— TechStore 2025 • <a href="https://example.com" style="color:#6b7280;text-decoration:underline">Help Center</a>
       </div>
     </div>
   </body>

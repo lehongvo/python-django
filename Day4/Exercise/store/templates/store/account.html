@@ -104,9 +104,7 @@
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <div class="text-xs md:text-sm opacity-90 mb-2">Pending Orders</div>
-                                <div class="text-3xl md:text-4xl font-black">
-                                    {% for order in orders %}{% if order.status == 'processing' %}1{% endif %}{% empty %}0{% endfor %}
-                                </div>
+                                <div class="text-3xl md:text-4xl font-black">{{ pending_count|default:0 }}</div>
                             </div>
                             <div class="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-all">
                                 <i class="fas fa-clock text-xl md:text-2xl"></i>
@@ -147,7 +145,7 @@
                     </div>
                     
                     {% if orders %}
-                    <div class="overflow-x-auto rounded-2xl border border-gray-100">
+                    <div class="overflow-x-auto overflow-y-auto max-h-96 rounded-2xl border border-gray-100">
                         <table class="w-full min-w-[640px]">
                             <thead class="bg-gradient-to-r from-indigo-50 to-purple-50">
                                 <tr>

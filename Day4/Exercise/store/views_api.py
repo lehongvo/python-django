@@ -262,6 +262,47 @@ def order_detail(request, order_number):
     return Response(serializer.data)
 
 order_detail.throttle_scope = 'order'
+@api_view(['GET'])
+@throttle_classes([ScopedRateThrottle])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
+def my_orders(request):
+    """Return recent orders for the authenticated user (default 10)."""
+    if not request.user.is_authenticated:
+        return Response({'orders': [], 'count': 0})
+    try:
+        customer = Customer.objects.get(user=request.user)
+    except Customer.DoesNotExist:
+        # Fallback by email in case relation not yet set
+        try:
+            customer = Customer.objects.get(email=request.user.email)
+        except Customer.DoesNotExist:
+            return Response({'orders': [], 'count': 0})
+
+    try:
+        limit = int(request.query_params.get('limit', 10))
+    except Exception:
+        limit = 10
+
+    orders_qs = (
+        Order.objects
+        .filter(customer=customer)
+        .order_by('-order_date')[: max(1, min(limit, 50))]
+    )
+    data = [
+        {
+            'order_number': o.order_number,
+            'status': o.status,
+            'total_amount': float(o.total_amount),
+            'order_date': o.order_date.isoformat(),
+            'items': o.items.count(),
+        }
+        for o in orders_qs
+    ]
+    return Response({'orders': data, 'count': len(data)})
+
+my_orders.throttle_scope = 'order'
+
 
 
 @api_view(['POST'])
@@ -281,21 +322,29 @@ def cart_sync(request):
     customer = _get_or_create_customer_for_user(request.user)
     
     cart_data = request.data.get('cart', [])
-    
-    # Clear existing cart for this customer
-    Cart.objects.filter(customer=customer).delete()
-    
-    # Add new cart items
+
+    # Normalize and merge duplicates by product_id
+    merged = {}
     for item in cart_data:
         try:
-            product = Product.objects.get(id=item['product_id'])
-            Cart.objects.create(
-                customer=customer,
-                product=product,
-                quantity=item['quantity']
-            )
+            pid = int(item.get('product_id'))
+            qty = int(item.get('quantity', 1))
+            if qty <= 0:
+                continue
+            merged[pid] = merged.get(pid, 0) + qty
+        except Exception:
+            continue
+
+    # Clear existing cart for this customer to mirror client state
+    Cart.objects.filter(customer=customer).delete()
+
+    # Insert merged items (one row per product)
+    for pid, qty in merged.items():
+        try:
+            product = Product.objects.get(id=pid)
+            Cart.objects.create(customer=customer, product=product, quantity=qty)
         except Product.DoesNotExist:
-            pass
+            continue
     
     return Response({'message': 'Cart synced successfully'})
 

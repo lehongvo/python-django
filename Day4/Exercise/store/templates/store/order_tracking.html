@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-6xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-12">
             <div class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold shadow">
@@ -16,25 +16,23 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-lg p-8">
-            <!-- Order Search Form -->
-            <form method="get" class="mb-8">
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="flex-1">
-                        <label for="order_number" class="block text-sm font-semibold text-gray-700 mb-2">Order Number</label>
-                        <div class="relative">
-                            <i class="fas fa-receipt absolute left-3 top-3.5 text-gray-400"></i>
-                            <input type="text" id="order_number" name="order_number" value="{{ order_number }}"
-                                   placeholder="e.g. ORD-20251029-1234"
-                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all">
-                        </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Recent Orders -->
+                <aside class="lg:col-span-1">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center"><i class="fas fa-history text-indigo-600 mr-3"></i>Recent Orders</h3>
+                    <div id="recentOrders" class="space-y-3 max-h-[28rem] overflow-auto pr-2">
+                        <div class="text-sm text-gray-500">Loading…</div>
                     </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="inline-flex items-center bg-indigo-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-indigo-700 shadow">
-                            <i class="fas fa-search mr-2"></i> Track Order
-                        </button>
+                    <div class="mt-4">
+                        <form method="get" class="flex">
+                            <input type="text" id="order_number" name="order_number" value="{{ order_number }}" placeholder="Search order #"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                            <button class="px-4 py-2 bg-indigo-600 text-white rounded-r-lg hover:bg-indigo-700"><i class="fas fa-search"></i></button>
+                        </form>
                     </div>
-                </div>
-            </form>
+                </aside>
+
+                <div class="lg:col-span-2">
             
             <!-- Order Details -->
             {% if order %}
@@ -47,15 +45,15 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div class="bg-gray-50 rounded-xl p-6">
                         <div class="text-sm text-gray-600 mb-1">Order Number</div>
-                        <div class="text-xl font-bold text-gray-900">{{ order.order_number }}</div>
+                        <div id="ot-order-number" class="text-xl font-bold text-gray-900">{{ order.order_number }}</div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-6">
                         <div class="text-sm text-gray-600 mb-1">Customer</div>
-                        <div class="text-xl font-bold text-gray-900">{{ order.customer.name }}</div>
+                        <div id="ot-customer" class="text-xl font-bold text-gray-900">{{ order.customer.name }}</div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-6">
                         <div class="text-sm text-gray-600 mb-1">Status</div>
-                        <div>
+                        <div id="ot-status">
                             {% if order.status == 'delivered' %}
                                 <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full font-semibold">
                                     <i class="fas fa-check-circle mr-2"></i>Delivered
@@ -81,32 +79,33 @@
                     </div>
                     <div class="bg-gray-50 rounded-xl p-6">
                         <div class="text-sm text-gray-600 mb-1">Total Amount</div>
-                        <div class="text-xl font-bold text-indigo-600">${{ order.total_amount }}</div>
+                        <div id="ot-total" class="text-xl font-bold text-indigo-600">${{ order.total_amount }}</div>
                     </div>
                 </div>
                 
                 <div class="bg-gray-50 rounded-xl p-6 mb-8">
                     <div class="text-sm text-gray-600 mb-1">Order Date</div>
-                    <div class="text-lg font-semibold text-gray-900">{{ order.order_date|date:"M d, Y H:i" }}</div>
+                    <div id="ot-date" class="text-lg font-semibold text-gray-900">{{ order.order_date|date:"M d, Y H:i" }}</div>
                 </div>
 
                 <!-- Visual timeline -->
                 <div class="mb-10">
                     {% with s=order.status %}
                     <div class="grid grid-cols-4 gap-3 text-center">
-                        <div class="p-4 rounded-xl border {% if s == 'processing' or s == 'shipped' or s == 'delivered' %}border-indigo-300 bg-indigo-50{% else %}border-gray-200{% endif %}">
+                        <button id="status-processing" data-status="processing" class="p-4 rounded-xl border {% if s == 'processing' or s == 'shipped' or s == 'delivered' %}border-indigo-300 bg-indigo-50{% else %}border-gray-200{% endif %} transition">
                             <div class="text-sm font-semibold">Processing</div>
-                        </div>
-                        <div class="p-4 rounded-xl border {% if s == 'shipped' or s == 'delivered' %}border-indigo-300 bg-indigo-50{% else %}border-gray-200{% endif %}">
+                        </button>
+                        <button id="status-shipped" data-status="shipped" class="p-4 rounded-xl border {% if s == 'shipped' or s == 'delivered' %}border-indigo-300 bg-indigo-50{% else %}border-gray-200{% endif %} transition">
                             <div class="text-sm font-semibold">Shipped</div>
-                        </div>
-                        <div class="p-4 rounded-xl border {% if s == 'out_for_delivery' or s == 'delivered' %}border-indigo-300 bg-indigo-50{% else %}border-gray-200{% endif %}">
+                        </button>
+                        <button id="status-out" data-status="out_for_delivery" class="p-4 rounded-xl border {% if s == 'out_for_delivery' or s == 'delivered' %}border-indigo-300 bg-indigo-50{% else %}border-gray-200{% endif %} transition">
                             <div class="text-sm font-semibold">Out for delivery</div>
-                        </div>
-                        <div class="p-4 rounded-xl border {% if s == 'delivered' %}border-green-300 bg-green-50{% else %}border-gray-200{% endif %}">
+                        </button>
+                        <button id="status-delivered" data-status="delivered" class="p-4 rounded-xl border {% if s == 'delivered' %}border-green-300 bg-green-50{% else %}border-gray-200{% endif %} transition">
                             <div class="text-sm font-semibold">Delivered</div>
-                        </div>
+                        </button>
                     </div>
+                    <p id="status-note" class="text-xs text-gray-500 mt-2">Click the stages to preview your shipment journey.</p>
                     {% endwith %}
                 </div>
                 
@@ -127,7 +126,7 @@
                                     <th class="text-right py-3 px-4 font-semibold text-gray-700">Subtotal</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="ot-items-body">
                                 {% for item in order.items.all %}
                                 <tr class="border-b border-gray-100 hover:bg-gray-50">
                                     <td class="py-4 px-4 font-semibold text-gray-900">{{ item.product.name }}</td>
@@ -175,7 +174,141 @@
                 <p class="text-lg">Enter an order number to track your order</p>
             </div>
             {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
+<script>
+// If redirected after successful checkout with cleared=1, purge local cart and refresh badges
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('cleared') === '1') {
+    try {
+      localStorage.removeItem('cart');
+      if (window.Cart && typeof Cart.updateCount === 'function') {
+        Cart.updateCount();
+      } else {
+        const badges = document.querySelectorAll('.cart-badge');
+        badges.forEach(b => { b.textContent = '0'; b.style.display = 'none'; });
+      }
+    } catch (e) {}
+  }
+})();
+
+// Load recent orders panel
+document.addEventListener('DOMContentLoaded', async function(){
+  try {
+    const res = await fetch('/api/orders/my/?limit=20', { credentials: 'include' });
+    if (!res.ok) return;
+    const data = await res.json();
+    const wrap = document.getElementById('recentOrders');
+    if (!wrap) return;
+    window.__recentOrders = data.orders || [];
+
+    function renderRecent(filterStatus){
+      const orders = (window.__recentOrders || []).filter(o => !filterStatus || o.status === filterStatus);
+      if (orders.length === 0){
+        wrap.innerHTML = '<div class="text-sm text-gray-500">No orders for this status.</div>';
+        return orders;
+      }
+      wrap.innerHTML = orders.map(o => `
+        <a href="?order_number=${o.order_number}" class="block rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50 p-3 transition">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-semibold text-gray-900">#${o.order_number}</div>
+              <div class="text-xs text-gray-500">${new Date(o.order_date).toLocaleDateString()}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-indigo-600 font-bold">$${(o.total_amount || 0).toFixed ? o.total_amount.toFixed(2) : o.total_amount}</div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${o.status==='delivered' ? 'bg-green-100 text-green-800' : o.status==='shipped' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span>
+            </div>
+          </div>
+        </a>
+      `).join('');
+      return orders;
+    }
+
+    // initial render (no filter)
+    renderRecent();
+
+    function setActive(btn){
+      ['status-processing','status-shipped','status-out','status-delivered'].forEach(id => {
+        const el = document.getElementById(id); if(!el) return;
+        el.classList.remove('ring-2','ring-indigo-300');
+      });
+      if (btn) btn.classList.add('ring-2','ring-indigo-300');
+    }
+
+    const map = {
+      'status-processing': 'processing',
+      'status-shipped': 'shipped',
+      'status-out': 'out_for_delivery',
+      'status-delivered': 'delivered',
+    };
+    async function loadOrderDetails(orderNumber){
+      try{
+        const res = await fetch(`/api/orders/${orderNumber}/`);
+        if(!res.ok) return;
+        const data = await res.json();
+        const o = data;
+        const num = document.getElementById('ot-order-number'); if(num) num.textContent = o.order_number;
+        const cust = document.getElementById('ot-customer'); if(cust) cust.textContent = (o.customer && o.customer.name) || cust.textContent;
+        const tot = document.getElementById('ot-total'); if(tot) tot.textContent = `$${(+o.total_amount).toFixed(2)}`;
+        const date = document.getElementById('ot-date'); if(date) date.textContent = new Date(o.order_date).toLocaleString();
+        const statusWrap = document.getElementById('ot-status');
+        if(statusWrap){
+          const s = o.status;
+          const html = s === 'delivered' ?
+            '<span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full font-semibold"><i class="fas fa-check-circle mr-2"></i>Delivered</span>' :
+            s === 'shipped' ? '<span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-semibold"><i class="fas fa-shipping-fast mr-2"></i>Shipped</span>' :
+            s === 'processing' ? '<span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-semibold"><i class="fas fa-clock mr-2"></i>Processing</span>' :
+            `<span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full font-semibold">${s}</span>`;
+          statusWrap.innerHTML = html;
+        }
+        const body = document.getElementById('ot-items-body');
+        if(body && Array.isArray(o.items)){
+          body.innerHTML = o.items.map(it => `
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+              <td class="py-4 px-4 font-semibold text-gray-900">${it.product.name}</td>
+              <td class="py-4 px-4 text-center text-gray-700">${it.quantity}</td>
+              <td class="py-4 px-4 text-right text-gray-700">$${(+it.price).toFixed(2)}</td>
+              <td class="py-4 px-4 text-right font-semibold text-indigo-600">$${(+it.price * it.quantity).toFixed(2)}</td>
+            </tr>
+          `).join('');
+        }
+      } catch(e){}
+    }
+
+    Object.keys(map).forEach(id => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        setActive(btn);
+        const filtered = renderRecent(map[id]);
+        if (filtered.length > 0){
+          // navigate to the first matching order
+          const first = filtered[0].order_number;
+          loadOrderDetails(first);
+        }
+      });
+    });
+  } catch (e) {}
+});
+
+// Make status steps interactive (client-side preview)
+document.addEventListener('DOMContentLoaded', function(){
+  const buttons = ['status-processing','status-shipped','status-out','status-delivered']
+    .map(id => document.getElementById(id)).filter(Boolean);
+  const note = document.getElementById('status-note');
+  function clear(){ buttons.forEach(b => { if(!b) return; b.classList.remove('bg-indigo-50'); b.classList.remove('bg-green-50'); b.classList.add('bg-white'); }); }
+  buttons.forEach(btn => btn && btn.addEventListener('click', () => {
+    clear();
+    if (!btn) return;
+    const st = btn.getAttribute('data-status');
+    if (st === 'delivered') { btn.classList.add('bg-green-50'); note && (note.textContent = 'Package delivered. Thank you for shopping with TechStore 2025!'); }
+    else { btn.classList.add('bg-indigo-50'); note && (note.textContent = 'Previewing stage: ' + (st.replace(/_/g,' '))); }
+  }));
+});
+</script>
 {% endblock %}

@@ -4,17 +4,22 @@ Order: {{ order_number }}
 Shipping: {{ shipping_method }}
 Estimated delivery: {{ delivery_eta }}
 
+Shipping to:
+{{ order.shipping_address }}, {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}, {{ order.shipping_country }}
+
 Items:
 {% for it in items %}
-- {{ it.name }} x {{ it.quantity }} — {{ it.price }}
+- {{ it.name }} x {{ it.quantity }} — $ {{ it.price|floatformat:2 }}
 {% endfor %}
 
-Subtotal: {{ subtotal }}
-Shipping: {{ shipping_fee }}
-Tax (estimated): {{ tax }}
-Total: {{ total }}
+Subtotal: $ {{ subtotal|floatformat:2 }}
+Shipping: $ {{ shipping_fee|floatformat:2 }}
+Tax (estimated): $ {{ tax|floatformat:2 }}
+Total: $ {{ total|floatformat:2 }}
 
-You'll receive another email when your order ships.
+Track your order: {{ track_url }}
+
+You'll receive another email when your order ships. Thanks for shopping with TechStore 2025!
 - TechStore 2025
 
 
