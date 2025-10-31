@@ -18,6 +18,111 @@ from django.core.mail import send_mail
 import random
 from datetime import timedelta
 from .models import EmailOTP
+from django.views.decorators.csrf import csrf_exempt
+import os
+import secrets
+
+def _get_eth_account():
+    try:
+        from eth_account.messages import encode_defunct
+        from eth_account import Account
+        return Account, encode_defunct
+    except Exception:
+        return None, None
+
+
+def web3_challenge(request):
+    """Issue a one-time nonce for MetaMask signature."""
+    nonce = secrets.token_hex(16)
+    request.session['web3_nonce'] = nonce
+    return JsonResponse({'nonce': nonce})
+
+
+@csrf_exempt
+def web3_verify(request):
+    """Verify signature for the issued nonce and store verified address in session.
+    If eth_account isn't available, allow in DEBUG for development.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+    import json as _json
+    try:
+        data = _json.loads(request.body or '{}')
+    except Exception:
+        data = {}
+    address = (data.get('address') or '').lower()
+    signature = data.get('signature')
+    nonce = request.session.get('web3_nonce')
+    if not (address and signature and nonce):
+        return JsonResponse({'error': 'Missing fields'}, status=400)
+
+    Account, encode_defunct = _get_eth_account()
+    verified = False
+    if Account and encode_defunct:
+        try:
+            msg = encode_defunct(text=f"TechStore login: {nonce}")
+            recovered = Account.recover_message(msg, signature=signature)
+            verified = recovered.lower() == address
+        except Exception:
+            verified = False
+    else:
+        # Dev fallback
+        verified = settings.DEBUG
+
+    if not verified:
+        return JsonResponse({'error': 'Signature verification failed'}, status=400)
+
+    request.session['web3_address_verified'] = address
+    # One-time use
+    request.session['web3_nonce'] = None
+    return JsonResponse({'ok': True, 'next': reverse('store:web3_complete')})
+
+
+def web3_complete(request):
+    """After successful signature, let user set username/password and create account."""
+    address = request.session.get('web3_address_verified')
+    if not address:
+        messages.error(request, 'MetaMask verification required.')
+        return redirect('store:user_login')
+
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
+        email = request.POST.get('email', '').strip().lower() or f"{address[:6]}@web3.local"
+        if not (username and password1 and password2):
+            messages.error(request, 'All fields are required.')
+        elif password1 != password2:
+            messages.error(request, 'Passwords do not match.')
+        else:
+            from django.contrib.auth.models import User
+            if User.objects.filter(username=username).exists():
+                messages.error(request, 'Username already exists.')
+            else:
+                user = User.objects.create_user(username=username, password=password1, email=email)
+                Customer.objects.update_or_create(
+                    email=email,
+                    defaults={
+                        'user': user,
+                        'name': user.get_full_name() or username,
+                        'phone': '', 'address': '', 'city': '', 'state': '', 'postal_code': '', 'country': 'USA'
+                    },
+                )
+                # login and set JWT cookies
+                login(request, user)
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                refresh_token = str(refresh)
+                response = redirect('store:account')
+                secure_flag = not settings.DEBUG
+                response.set_cookie('access_token', access_token, max_age=60*60, httponly=True, secure=secure_flag, samesite='Lax', path='/')
+                response.set_cookie('refresh_token', refresh_token, max_age=7*24*60*60, httponly=True, secure=secure_flag, samesite='Lax', path='/')
+                messages.success(request, 'Account created via MetaMask and logged in!')
+                # clear session flags
+                request.session['web3_address_verified'] = None
+                return response
+
+    return render(request, 'store/web3_complete.html', {'address': address})
 
 
 def home(request):

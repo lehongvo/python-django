@@ -456,11 +456,6 @@
                     
                     <!-- Icons Group -->
                     <div class="flex items-center space-x-4">
-                        <!-- Wishlist -->
-                        <a href="#" class="relative text-gray-600 hover:text-red-500 transition-colors group" onclick="toggleWishlist()">
-                            <i class="fas fa-heart text-lg group-hover:scale-110 transition-transform"></i>
-                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden" id="wishlist-count">0</span>
-                        </a>
                         
                         <!-- Cart -->
                         <a href="{% url 'store:cart' %}" class="relative text-gray-600 hover:text-blue-600 transition-colors group">
@@ -537,16 +532,16 @@
                         Experience the future of e-commerce with our modern platform.
                     </p>
                     <div class="flex space-x-4">
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors">
+                        <a href="https://www.facebook.com/techstore" target="_blank" rel="noopener" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors">
                             <i class="fab fa-facebook-f"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors">
+                        <a href="https://twitter.com/techstore" target="_blank" rel="noopener" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors">
                             <i class="fab fa-twitter"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors">
+                        <a href="https://www.instagram.com/techstore" target="_blank" rel="noopener" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors">
                             <i class="fab fa-instagram"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors">
+                        <a href="https://www.linkedin.com/company/techstore" target="_blank" rel="noopener" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors">
                             <i class="fab fa-linkedin-in"></i>
                         </a>
                     </div>
@@ -672,18 +667,6 @@
     
     {% block extra_js %}{% endblock %}
     <script>
-      // Wishlist functionality
-      let wishlistCount = 0;
-      function toggleWishlist() {
-          wishlistCount++;
-          const wishlistElement = document.getElementById('wishlist-count');
-          wishlistElement.textContent = wishlistCount;
-          wishlistElement.classList.remove('hidden');
-          
-          // Show notification
-          showNotification('Added to wishlist! ❤️', 'success');
-      }
-      
       // Notification system
       function showNotification(message, type = 'info') {
           const notification = document.createElement('div');
@@ -722,10 +705,6 @@
         } catch (e) {
           showNotification('Unable to open quick view', 'error');
         }
-      }
-      
-      function addToWishlist(id) {
-        toggleWishlist();
       }
       
       // Add smooth scrolling and loading effects

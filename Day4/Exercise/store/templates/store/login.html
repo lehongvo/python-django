@@ -73,6 +73,11 @@
                     <a href="{% url 'social:begin' 'google-oauth2' %}" class="w-full border rounded-xl py-2.5 text-center hover:bg-gray-50"><i class="fab fa-google mr-2 text-red-500"></i>Google</a>
                     <a href="{% url 'social:begin' 'facebook' %}" class="w-full border rounded-xl py-2.5 text-center hover:bg-gray-50"><i class="fab fa-facebook mr-2 text-blue-600"></i>Facebook</a>
                 </div>
+                {# MetaMask login temporarily disabled
+                <button id="btn-web3-login" type="button" class="w-full mt-3 border rounded-xl py-2.5 hover:bg-gray-50">
+                    <i class="fab fa-ethereum mr-2"></i> Continue with MetaMask
+                </button>
+                #}
                 <div class="text-center text-sm text-gray-600">
                     <p>Don't have an account?</p>
                     <a href="{% url 'store:register' %}" class="text-indigo-600 hover:text-indigo-700 font-semibold">
@@ -92,4 +97,6 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_scripts %}{% endblock %}
 

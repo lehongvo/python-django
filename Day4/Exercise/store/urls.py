@@ -19,6 +19,10 @@ urlpatterns = [
     path('account/delete/confirm/', views.delete_account_confirm, name='delete_account_confirm'),
     path('account/addresses/', views.account_addresses, name='account_addresses'),
     path('logout/', views.logout_view, name='logout'),
+    # Web3 / MetaMask auth
+    path('auth/web3/challenge/', views.web3_challenge, name='web3_challenge'),
+    path('auth/web3/verify/', views.web3_verify, name='web3_verify'),
+    path('auth/web3/complete/', views.web3_complete, name='web3_complete'),
     path('track-order/', views.order_tracking, name='order_tracking'),
     # Support pages
     path('support/help-center/', views.help_center, name='help_center'),

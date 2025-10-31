@@ -229,7 +229,7 @@
                 </div>
                 
                 <!-- Premium Category Info -->
-                <div class="p-8">
+                <div class="pt-8 px-8 pb-4 flex flex-col h-full">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-xl font-black text-gray-900 group-hover:text-indigo-600 transition-colors duration-300">{{ category.name }}</h3>
                         <div class="flex items-center bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold">
@@ -238,13 +238,15 @@
                         </div>
                     </div>
                     
-                    <p class="text-gray-600 mb-6 text-sm line-clamp-2 leading-relaxed">{{ category.description|default:"Discover amazing products in this premium category." }}</p>
+                    <p class="text-gray-600 mb-4 text-sm line-clamp-2 leading-relaxed">{{ category.description|default:"Discover amazing products in this premium category." }}</p>
                     
                     <!-- Premium Action Button -->
-                    <a href="{% url 'store:product_list' %}?category={{ category.slug }}" 
-                       class="block w-full text-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-2xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-indigo-500/25">
-                        <i class="fas fa-arrow-right mr-2"></i>
-                        Browse {{ category.name }}
+                    <a href="{% url 'store:product_list' %}?category={{ category.slug }}" title="Browse {{ category.name }}"
+                       class="mt-2 block w-full text-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-indigo-500/25 h-12 px-4">
+                        <span class="inline-flex items-center justify-center w-full gap-2 h-full">
+                            <i class="fas fa-arrow-right"></i>
+                            <span class="truncate whitespace-nowrap max-w-[220px] md:max-w-[260px] lg:max-w-[280px]">Browse {{ category.name }}</span>
+                        </span>
                     </a>
                 </div>
             </div>
