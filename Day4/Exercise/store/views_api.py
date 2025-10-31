@@ -9,6 +9,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .authentication import CookieJWTAuthentication
 from rest_framework.response import Response
+from django.db import models
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .permissions import ApiKeyPermission
 from django.shortcuts import get_object_or_404
@@ -501,7 +502,7 @@ def promo_mine(request):
     return Response({'promo_code': obj.promo_code, 'promo_amount': obj.promo_amount, 'is_used': obj.is_used})
 
 @csrf_exempt
-@api_view(['POST'])
+@api_view(['POST', 'GET'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
 @permission_classes([ApiKeyPermission, AllowAny])
@@ -509,7 +510,10 @@ def promo_validate(request):
     """Validate a promo code. If user is authenticated, also allow user-specific codes.
     Returns promo_amount if valid, without marking used.
     """
-    code = (request.data.get('promo_code') or '').strip().upper()
+    if request.method == 'GET':
+        code = (request.query_params.get('promo_code') or '').strip().upper()
+    else:
+        code = (request.data.get('promo_code') or '').strip().upper()
     if not code:
         return Response({'error': 'Promo code is required'}, status=status.HTTP_400_BAD_REQUEST)
 

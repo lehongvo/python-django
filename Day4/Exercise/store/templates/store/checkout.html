@@ -523,26 +523,36 @@ document.addEventListener('DOMContentLoaded', async function() {
         code = (code||'').trim().toUpperCase();
         return myPromos.find(p => String(p.promo_code).toUpperCase() === code);
     }
-    function applyCurrentCode(p){
-        localStorage.setItem('applied_promo', JSON.stringify(p));
+    async function validateOnServer(promoCode){
+        try{
+            const url = `/api/promos/validate/?promo_code=${encodeURIComponent(promoCode)}`;
+            const res = await fetch(url, { credentials: 'same-origin' });
+            const data = await res.json();
+            if (res.ok && data.valid) return { promo_code: data.promo_code, promo_amount: data.promo_amount };
+            return null;
+        } catch(_){ return null; }
+    }
+    async function applyCurrentCode(p){
+        const code = p.promo_code || p;
+        const validated = await validateOnServer(code);
+        if (!validated){
+            promoError.textContent = 'Promo code is invalid or already used.';
+            promoError.classList.remove('hidden');
+            setTimeout(()=>promoError.classList.add('hidden'), 3000);
+            return;
+        }
+        localStorage.setItem('applied_promo', JSON.stringify(validated));
         sessionStorage.setItem('promo_applied','1');
-        // small success animation on total
         const totalEl = document.getElementById('sum-total');
         totalEl.classList.add('animate-pulse');
         setTimeout(()=> totalEl.classList.remove('animate-pulse'), 500);
         recompute();
     }
-    promoApply.addEventListener('click', ()=>{
+    promoApply.addEventListener('click', async ()=>{
         const code = promoInput.value.trim();
-        const p = findPromo(code);
-        if (!p){
-            promoError.textContent = 'Promo code not found in your unused vouchers.';
-            promoError.classList.remove('hidden');
-            setTimeout(()=>promoError.classList.add('hidden'), 3000);
-            return;
-        }
+        const p = findPromo(code) || { promo_code: code };
         closeDropdown();
-        applyCurrentCode(p);
+        await applyCurrentCode(p);
     });
 
     // Card number formatting: allow only digits, limit to 16, group by 4 with spaces
