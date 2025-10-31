@@ -582,42 +582,37 @@ def register(request):
         if step == 'request_otp':
             if not email:
                 messages.error(request, 'Email is required.')
-            else:
-                # Ensure email not already used by a user/customer
-                from django.contrib.auth.models import User
-                if User.objects.filter(email=email).exists() or Customer.objects.filter(email=email).exists():
-                    messages.error(request, 'Email is already in use.')
-                else:
-                    # Create OTP
-                    code = f"{random.randint(100000, 999999)}"
-                    expires_at = timezone.now() + timedelta(minutes=10)
-                    EmailOTP.objects.create(email=email, code=code, expires_at=expires_at)
-                    # Send OTP via email
-                    try:
-                        from django.conf import settings as dj_settings
-                        send_mail(
-                            subject='Your verification code',
-                            message=f'Your OTP code is: {code}. It expires in 10 minutes.',
-                            from_email=dj_settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=[email],
-                            fail_silently=False,
-                        )
-                    except Exception as e:
-                        messages.error(request, f"Failed to send OTP email: {e}")
-                    messages.success(request, 'OTP sent to your email. Please check your inbox.')
-                    context = {
-                        'prefill_email': email,
-                        'step': 'verify_otp',
-                    }
-                    # In development, also show OTP to unblock testing
-                    try:
-                        from django.conf import settings as dj_settings
-                        # Only show OTP inline when using console email backend in development
-                        if dj_settings.DEBUG and str(dj_settings.EMAIL_BACKEND).endswith('console.EmailBackend'):
-                            context['dev_otp'] = code
-                    except Exception:
-                        pass
-                    return render(request, 'store/register.html', context)
+                return render(request, 'store/register.html', {'step': 'request_otp'})
+            # Ensure email not already used by a user/customer
+            from django.contrib.auth.models import User
+            if User.objects.filter(email=email).exists() or Customer.objects.filter(email=email).exists():
+                messages.error(request, 'Email is already in use.')
+                return render(request, 'store/register.html', {'step': 'request_otp'})
+            # Create OTP
+            code = f"{random.randint(100000, 999999)}"
+            expires_at = timezone.now() + timedelta(minutes=10)
+            EmailOTP.objects.create(email=email, code=code, expires_at=expires_at)
+            # Send OTP via email
+            try:
+                from django.conf import settings as dj_settings
+                send_mail(
+                    subject='Your verification code',
+                    message=f'Your OTP code is: {code}. It expires in 10 minutes.',
+                    from_email=dj_settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                messages.error(request, f"Failed to send OTP email: {e}")
+            messages.success(request, 'OTP sent to your email. Please check your inbox.')
+            context = {'prefill_email': email, 'step': 'verify_otp'}
+            try:
+                from django.conf import settings as dj_settings
+                if dj_settings.DEBUG and str(dj_settings.EMAIL_BACKEND).endswith('console.EmailBackend'):
+                    context['dev_otp'] = code
+            except Exception:
+                pass
+            return render(request, 'store/register.html', context)
 
         elif step == 'verify_otp':
             otp = request.POST.get('otp', '').strip()
@@ -628,79 +623,69 @@ def register(request):
                     'step': 'verify_otp',
                     'prefill_username': username,
                 })
-            elif password1 != password2:
+            if password1 != password2:
                 messages.error(request, 'Passwords do not match.')
                 return render(request, 'store/register.html', {
                     'prefill_email': email,
                     'step': 'verify_otp',
                     'prefill_username': username,
                 })
-            elif not (otp.isdigit() and len(otp) == 6):
+            if not (otp.isdigit() and len(otp) == 6):
                 messages.error(request, 'OTP must be 6 digits.')
                 return render(request, 'store/register.html', {
                     'prefill_email': email,
                     'step': 'verify_otp',
                     'prefill_username': username,
                 })
-            else:
-                # Validate OTP: accept any unexpired, unused code for this email
-                now = timezone.now()
-                otp_qs = EmailOTP.objects.filter(email=email, is_used=False, expires_at__gt=now)
-                record = otp_qs.filter(code=otp).order_by('-created_at').first()
-                if not record:
-                    messages.error(request, 'OTP not found. Please request a new code.')
-                    return render(request, 'store/register.html', {
-                        'prefill_email': email,
-                        'step': 'verify_otp',
-                        'prefill_username': username,
-                    })
-                else:
-                    # OTP valid → continue account creation
-                        # Complete registration
-                        from django.contrib.auth.models import User
-                        if User.objects.filter(username=username).exists():
-                            messages.error(request, 'Username already exists.')
-                            return render(request, 'store/register.html', {
-                                'prefill_email': email,
-                                'step': 'verify_otp',
-                                'prefill_username': username,
-                            })
-                        elif User.objects.filter(email=email).exists():
-                            messages.error(request, 'Email is already in use.')
-                            return render(request, 'store/register.html', {
-                                'prefill_email': email,
-                                'step': 'verify_otp',
-                                'prefill_username': username,
-                            })
 
-                        created_user = User.objects.create_user(username=username, email=email, password=password1)
-                        Customer.objects.update_or_create(
-                            email=email,
-                            defaults={
-                                'user': created_user,
-                                'name': created_user.get_full_name() or username,
-                                'phone': '', 'address': '', 'city': '', 'state': '', 'postal_code': '', 'country': 'USA'
-                            },
-                        )
-                        record.is_used = True
-                        record.save(update_fields=['is_used'])
+            # Validate OTP
+            now = timezone.now()
+            otp_qs = EmailOTP.objects.filter(email=email, is_used=False, expires_at__gt=now)
+            record = otp_qs.filter(code=otp).order_by('-created_at').first()
+            if not record:
+                messages.error(request, 'OTP not found. Please request a new code.')
+                return render(request, 'store/register.html', {
+                    'prefill_email': email,
+                    'step': 'verify_otp',
+                    'prefill_username': username,
+                })
 
-                        # Assign welcome promos (8) and email
-                        try:
-                            assign_welcome_promo_and_email(created_user, count=8)
-                        except Exception:
-                            pass
+            from django.contrib.auth.models import User
+            if User.objects.filter(username=username).exists():
+                messages.error(request, 'Username already exists.')
+                return render(request, 'store/register.html', {
+                    'prefill_email': email,
+                    'step': 'verify_otp',
+                    'prefill_username': username,
+                })
+            if User.objects.filter(email=email).exists():
+                messages.error(request, 'Email is already in use.')
+                return render(request, 'store/register.html', {
+                    'prefill_email': email,
+                    'step': 'verify_otp',
+                    'prefill_username': username,
+                })
 
-                        # Success: inform user and redirect to Login (require explicit login)
-                        messages.success(request, 'Your account has been created successfully. Please log in to continue.')
-                        return redirect('store:user_login')
+            created_user = User.objects.create_user(username=username, email=email, password=password1)
+            Customer.objects.update_or_create(
+                email=email,
+                defaults={
+                    'user': created_user,
+                    'name': created_user.get_full_name() or username,
+                    'phone': '', 'address': '', 'city': '', 'state': '', 'postal_code': '', 'country': 'USA'
+                },
+            )
+            record.is_used = True
+            record.save(update_fields=['is_used'])
+            try:
+                assign_welcome_promo_and_email(created_user, count=8)
+            except Exception:
+                pass
+            messages.success(request, 'Your account has been created successfully. Please log in to continue.')
+            return redirect('store:user_login')
 
-        # On any validation error, fall through and re-render appropriate step
-        return render(request, 'store/register.html', {
-            'prefill_email': email,
-            'step': 'verify_otp' if request.POST.get('step') == 'verify_otp' else 'request_otp',
-            'prefill_username': username,
-        })
+        # Fallback re-render
+        return render(request, 'store/register.html', {'step': 'request_otp', 'prefill_email': email})
 
     # GET: show initial step to request OTP
     return render(request, 'store/register.html', {'step': 'request_otp'})
@@ -915,7 +900,7 @@ def order_tracking(request):
                 order_number = latest.order_number
         except Customer.DoesNotExist:
             pass
-
+    
     order = None
     if order_number:
         try:

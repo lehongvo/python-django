@@ -319,7 +319,11 @@ def cart_sync(request):
     """Sync cart from localStorage to database"""
     if not request.user.is_authenticated:
         return Response(
-            {'error': 'Please log in to sync your cart'},
+            {
+                'error': 'Please log in to sync your cart',
+                'requires_login': True,
+                'login_url': '/login/'
+            },
             status=status.HTTP_401_UNAUTHORIZED
         )
     
@@ -328,7 +332,7 @@ def cart_sync(request):
     customer = _get_or_create_customer_for_user(request.user)
     
     cart_data = request.data.get('cart', [])
-
+    
     # Normalize and merge duplicates by product_id
     merged = {}
     for item in cart_data:
@@ -343,7 +347,7 @@ def cart_sync(request):
 
     # Clear existing cart for this customer to mirror client state
     Cart.objects.filter(customer=customer).delete()
-
+    
     # Insert merged items (one row per product)
     for pid, qty in merged.items():
         try:
@@ -417,7 +421,7 @@ cart_list.throttle_scope = 'cart'
 def cart_update(request):
     """Set quantity for a cart item in DB (add/update/remove)."""
     if not request.user.is_authenticated:
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'Unauthorized', 'requires_login': True, 'login_url': '/login/'}, status=status.HTTP_401_UNAUTHORIZED)
 
     product_id = request.data.get('product_id')
     quantity = int(request.data.get('quantity', 1))
@@ -452,7 +456,7 @@ cart_update.throttle_scope = 'cart'
 def cart_remove(request):
     """Remove an item from the cart in DB."""
     if not request.user.is_authenticated:
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'Unauthorized', 'requires_login': True, 'login_url': '/login/'}, status=status.HTTP_401_UNAUTHORIZED)
 
     product_id = request.data.get('product_id')
     if not product_id:
@@ -478,7 +482,7 @@ cart_remove.throttle_scope = 'cart'
 def promo_assign(request):
     """Assign an unused promo code to the authenticated user (id can be provided for admin usage)."""
     if not request.user.is_authenticated:
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'Unauthorized', 'requires_login': True, 'login_url': '/login/'}, status=status.HTTP_401_UNAUTHORIZED)
 
     code = assign_welcome_promo_and_email(request.user)
     if not code:

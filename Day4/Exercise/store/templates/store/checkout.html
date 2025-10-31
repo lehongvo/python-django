@@ -152,7 +152,7 @@
                                 </button>
                             </div>
                         </div>
-                    </div>
+                </div>
 
                 <!-- Shipping Method -->
                 <div id="section-shipping" class="bg-white rounded-2xl shadow-lg p-8 mb-6 hidden max-w-3xl mx-auto">
@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (m === 0) m = 1;
                 if (m > 12) m = 12;
                 mm = String(m).padStart(2, '0');
-            }
+    }
             return yy ? `${mm}/${yy}` : mm;
         };
         expInput.addEventListener('input', () => {
