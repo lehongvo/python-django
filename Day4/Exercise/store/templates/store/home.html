@@ -93,9 +93,15 @@
                                         <a href="{% url 'store:product_detail' product.slug %}" class="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors">
                                             <i class="fas fa-eye mr-1"></i>Quick View
                                         </a>
+                                        {% if user.is_authenticated %}
                                         <button type="button" onclick="addToCart({{ product.id }})" class="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-indigo-700 transition-colors">
                                             <i class="fas fa-shopping-cart mr-1"></i>Add
                                         </button>
+                                        {% else %}
+                                        <a href="/login/?next={{ request.path }}" class="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center">
+                                            <i class="fas fa-shopping-cart mr-1"></i>Add
+                                        </a>
+                                        {% endif %}
                                         <button type="button" data-product-id="{{ product.id }}" class="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors add-to-wishlist-btn">
                                             <i class="fas fa-heart mr-1"></i>Wishlist
                                         </button>
@@ -268,9 +274,15 @@
                             <i class="fas fa-eye mr-2"></i>View Details
                         </a>
                         {% if product.is_in_stock %}
+                        {% if user.is_authenticated %}
                         <button class="bg-green-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors" onclick="addToCart({{ product.id }})">
                             <i class="fas fa-shopping-cart"></i>
                         </button>
+                        {% else %}
+                        <a class="bg-green-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors inline-flex items-center" href="/login/?next={{ request.path }}">
+                            <i class="fas fa-shopping-cart"></i>
+                        </a>
+                        {% endif %}
                         {% else %}
                         <button class="bg-gray-400 text-white px-4 py-3 rounded-xl font-semibold cursor-not-allowed" disabled>
                             <i class="fas fa-times"></i>

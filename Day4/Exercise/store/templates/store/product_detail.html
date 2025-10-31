@@ -141,6 +141,7 @@
                     
                     <div class="flex space-x-4">
                         {% if product.is_in_stock %}
+                        {% if user.is_authenticated %}
                         <button class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-semibold hover:bg-indigo-700 transition-colors" 
                                 data-add-to-cart data-product-id="{{ product.id }}" data-quantity="1">
                             <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
@@ -149,6 +150,16 @@
                                 data-buy-now data-product-id="{{ product.id }}" data-quantity="1">
                             <i class="fas fa-bolt mr-2"></i>Buy Now
                         </button>
+                        {% else %}
+                        <a class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-semibold hover:bg-indigo-700 transition-colors text-center" 
+                           href="/login/?next={{ request.path }}">
+                            <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
+                        </a>
+                        <a class="bg-green-600 text-white px-6 py-4 rounded-xl font-semibold hover:bg-green-700 transition-colors inline-flex items-center"
+                           href="/login/?next={{ request.path }}">
+                            <i class="fas fa-bolt mr-2"></i>Buy Now
+                        </a>
+                        {% endif %}
                         {% else %}
                         <button class="flex-1 bg-gray-400 text-white py-4 rounded-xl font-semibold cursor-not-allowed" disabled>
                             <i class="fas fa-times mr-2"></i>Out of Stock

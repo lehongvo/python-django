@@ -101,6 +101,13 @@ async function addToCart(productId, quantity = 1) {
             })
         });
         
+        // If not authenticated, redirect to login
+        if (response.status === 401) {
+            showNotification('Please log in to add items to cart', 'error');
+            setTimeout(() => window.location.href = '/login/', 800);
+            return null;
+        }
+
         const data = await response.json();
         
         if (response.ok) {
@@ -140,6 +147,13 @@ async function buyNow(productId, quantity = 1) {
             })
         });
         
+        // If not authenticated, redirect to login
+        if (response.status === 401) {
+            showNotification('Please log in to purchase products', 'error');
+            setTimeout(() => window.location.href = '/login/', 800);
+            return null;
+        }
+
         const data = await response.json();
         
         if (response.ok) {
@@ -246,6 +260,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         credentials: 'include',
                         body: JSON.stringify({ product_id: productId, quantity })
                     });
+                    if (res.status === 401) {
+                        showNotification('Please log in to add items to cart', 'error');
+                        setTimeout(() => window.location.href = '/login/', 800);
+                        return;
+                    }
                     if (res.ok) {
                         await Cart.add(productId, quantity);
                         showNotification('Product added to cart successfully!', 'success');
