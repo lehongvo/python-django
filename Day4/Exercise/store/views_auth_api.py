@@ -11,6 +11,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .serializers import CustomerSerializer
 from .models import Customer
+from .utils import assign_welcome_promo_and_email
 
 
 @api_view(['POST'])
@@ -52,6 +53,12 @@ def register_api(request):
     if customer.user_id in (None, user.id):
         customer.user = user
         customer.save(update_fields=['user'])
+
+    # Assign welcome promo and send email
+    try:
+        assign_welcome_promo_and_email(user)
+    except Exception:
+        pass
 
     return Response({
         'message': 'Registered successfully',

@@ -9,7 +9,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .permissions import ApiKeyPermission
 from django.shortcuts import get_object_or_404
-from .models import Product, Category, Order, OrderItem, Customer, Cart
+from .models import Product, Category, Order, OrderItem, Customer, Cart, PromoCode
+from .utils import assign_welcome_promo_and_email
 from .serializers import (
     ProductSerializer, CategorySerializer,
     OrderSerializer, OrderItemSerializer
@@ -464,3 +465,58 @@ def cart_remove(request):
 
 cart_remove.throttle_scope = 'cart'
 
+
+@api_view(['POST'])
+@throttle_classes([ScopedRateThrottle])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
+def promo_assign(request):
+    """Assign an unused promo code to the authenticated user (id can be provided for admin usage)."""
+    if not request.user.is_authenticated:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    code = assign_welcome_promo_and_email(request.user)
+    if not code:
+        return Response({'error': 'No promo codes available'}, status=status.HTTP_404_NOT_FOUND)
+    obj = request.user.promo_codes.order_by('-created_at').first()
+    return Response({'promo_code': obj.promo_code, 'promo_amount': obj.promo_amount})
+
+promo_assign.throttle_scope = 'auth'
+
+@api_view(['GET'])
+@throttle_classes([ScopedRateThrottle])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission])
+def promo_mine(request):
+    """Return the user's assigned promo code if any."""
+    if not request.user.is_authenticated:
+        return Response({'promo_code': None})
+    obj = request.user.promo_codes.order_by('-created_at').first()
+    if not obj:
+        return Response({'promo_code': None})
+    return Response({'promo_code': obj.promo_code, 'promo_amount': obj.promo_amount, 'is_used': obj.is_used})
+
+@api_view(['POST'])
+@throttle_classes([ScopedRateThrottle])
+@authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
+@permission_classes([ApiKeyPermission, AllowAny])
+def promo_validate(request):
+    """Validate a promo code. If user is authenticated, also allow user-specific codes.
+    Returns promo_amount if valid, without marking used.
+    """
+    code = (request.data.get('promo_code') or '').strip().upper()
+    if not code:
+        return Response({'error': 'Promo code is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    qs = PromoCode.objects.filter(promo_code=code, is_used=False)
+    if request.user and request.user.is_authenticated:
+        qs = qs.filter(models.Q(user__isnull=True) | models.Q(user=request.user))
+    else:
+        qs = qs.filter(user__isnull=True)
+
+    obj = qs.first()
+    if not obj:
+        return Response({'valid': False, 'error': 'Invalid or already used code'}, status=400)
+    return Response({'valid': True, 'promo_amount': obj.promo_amount, 'promo_code': obj.promo_code})
+
+promo_validate.throttle_scope = 'auth'

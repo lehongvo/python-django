@@ -266,3 +266,23 @@ class EmailOTP(models.Model):
 
     def __str__(self):
         return f"OTP for {self.email} ({'used' if self.is_used else 'active'})"
+
+
+class PromoCode(models.Model):
+    """Promo code issuance and usage tracking."""
+    promo_code = models.CharField(max_length=64, unique=True, db_index=True)
+    is_used = models.BooleanField(default=False)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='promo_codes')
+    promo_amount = models.PositiveSmallIntegerField(default=10, help_text='Discount percent (e.g., 10 means 10%)')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['promo_code', 'is_used']),
+            models.Index(fields=['user', 'is_used']),
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.promo_code} ({'used' if self.is_used else 'unused'})"

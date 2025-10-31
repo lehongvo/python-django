@@ -69,8 +69,8 @@
                         </div>
                         <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center gap-2">
                             <i class="fas fa-ticket-alt text-indigo-600"></i>
-                            <input type="text" placeholder="Promo code" class="flex-1 bg-transparent focus:outline-none text-sm">
-                            <button class="px-3 py-2 bg-white rounded-lg border text-sm font-semibold hover:bg-gray-50">Apply</button>
+                            <input id="promo-input" type="text" placeholder="Promo code" class="flex-1 bg-transparent focus:outline-none text-sm uppercase">
+                            <button id="promo-apply" class="px-3 py-2 bg-white rounded-lg border text-sm font-semibold hover:bg-gray-50">Apply</button>
                         </div>
                         
                         <a id="checkout-btn" href="/checkout/" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-md text-center block">
@@ -188,7 +188,13 @@ async function displayCart(cart) {
     cartItemsDiv.innerHTML = html;
     
     const tax = subtotal * 0.1;
-    const grandTotal = subtotal + tax;
+    // Apply promo if present in localStorage
+    const applied = JSON.parse(localStorage.getItem('applied_promo') || 'null');
+    let discount = 0;
+    if (applied && applied.promo_amount) {
+        discount = (subtotal + tax) * (applied.promo_amount / 100.0);
+    }
+    const grandTotal = subtotal + tax - discount;
     
     document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
     document.getElementById('tax').textContent = '$' + tax.toFixed(2);
@@ -213,6 +219,38 @@ async function updateQuantity(productId, delta) {
         });
     } catch (e) {}
 }
+
+// Promo apply handler
+document.addEventListener('click', async (e) => {
+    if (e.target && e.target.id === 'promo-apply') {
+        const input = document.getElementById('promo-input');
+        const code = (input.value || '').trim().toUpperCase();
+        if (!code) {
+            toast('Please enter a promo code', 'error');
+            return;
+        }
+        try {
+            const res = await fetch('/api/promos/validate/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ promo_code: code })
+            });
+            const data = await res.json();
+            if (!res.ok || data.valid === false) {
+                toast(data.error || 'Invalid promo code', 'error');
+                localStorage.removeItem('applied_promo');
+                displayCart(JSON.parse(localStorage.getItem('cart') || '[]'));
+                return;
+            }
+            localStorage.setItem('applied_promo', JSON.stringify({ promo_code: data.promo_code, promo_amount: data.promo_amount }));
+            toast(`Applied ${data.promo_amount}% off`, 'success');
+            displayCart(JSON.parse(localStorage.getItem('cart') || '[]'));
+        } catch (_) {
+            toast('Could not validate promo code', 'error');
+        }
+    }
+});
 
 async function removeFromCart(productId) {
     Cart.remove(productId);

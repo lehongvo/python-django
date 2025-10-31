@@ -5,7 +5,7 @@ from django.contrib.auth import logout, authenticate, login
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
-from .models import Product, Category, Tag, Order, OrderItem, Customer, Subscriber
+from .models import Product, Category, Tag, Order, OrderItem, Customer, Subscriber, PromoCode
 from django.db.models import Q, F, Case, When, Value, FloatField, ExpressionWrapper
 from django.http import JsonResponse
 from django.urls import reverse
@@ -18,6 +18,7 @@ from django.core.mail import send_mail
 import random
 from datetime import timedelta
 from .models import EmailOTP
+from .utils import assign_welcome_promo_and_email
 from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 import os
@@ -358,7 +359,20 @@ def checkout(request):
         shipping_method = request.POST.get('shipping_method', 'standard')
         shipping_fee = 0.0 if shipping_method == 'standard' else 9.99
         tax = subtotal * 0.1
-        grand_total = subtotal + tax + shipping_fee
+        # Promo code (optional)
+        promo_code = (request.POST.get('promo_code') or '').strip().upper()
+        discount_amount = 0.0
+        promo_obj = None
+        if promo_code:
+            qs = PromoCode.objects.filter(promo_code=promo_code, is_used=False)
+            if request.user.is_authenticated:
+                qs = qs.filter(models.Q(user__isnull=True) | models.Q(user=request.user))
+            else:
+                qs = qs.filter(user__isnull=True)
+            promo_obj = qs.first()
+            if promo_obj:
+                discount_amount = (subtotal + tax + shipping_fee) * (promo_obj.promo_amount / 100.0)
+        grand_total = subtotal + tax + shipping_fee - discount_amount
         
         # Generate order number
         from datetime import datetime
@@ -404,6 +418,8 @@ def checkout(request):
                 'tax': tax,
                 'shipping_fee': shipping_fee,
                 'total': grand_total,
+                'promo_code': promo_obj.promo_code if promo_obj else None,
+                'promo_amount': promo_obj.promo_amount if promo_obj else None,
                 'shipping_method': 'Express' if shipping_method != 'standard' else 'Standard',
                 'delivery_eta': delivery_eta,
                 'order': order,
@@ -430,6 +446,16 @@ def checkout(request):
             msg.send(fail_silently=True)
         except Exception:
             pass
+
+        # Mark promo used after successful order
+        if promo_obj:
+            try:
+                promo_obj.is_used = True
+                if request.user.is_authenticated and promo_obj.user_id is None:
+                    promo_obj.user = request.user
+                promo_obj.save(update_fields=['is_used', 'user'])
+            except Exception:
+                pass
 
         messages.success(request, f'Order {order_number} placed successfully! A confirmation email has been sent.')
         
@@ -520,6 +546,12 @@ def user_login(request):
                 samesite='Lax',
                 path='/',
             )
+            # First login welcome promo if none assigned yet
+            try:
+                if not getattr(user, 'promo_codes', None) or not user.promo_codes.exists():
+                    assign_welcome_promo_and_email(user)
+            except Exception:
+                pass
             return response
         else:
             messages.error(request, 'Invalid username or password.')
@@ -643,6 +675,12 @@ def register(request):
                         record.is_used = True
                         record.save(update_fields=['is_used'])
 
+                        # Assign welcome promo and email
+                        try:
+                            assign_welcome_promo_and_email(created_user)
+                        except Exception:
+                            pass
+
                         # Success: inform user and redirect to Login (require explicit login)
                         messages.success(request, 'Your account has been created successfully. Please log in to continue.')
                         return redirect('store:user_login')
@@ -683,6 +721,7 @@ def account(request):
         orders = []
         customer = None
         user = None
+        pending_count = 0
     
     context = {
         'user': user,

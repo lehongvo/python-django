@@ -5,6 +5,7 @@ from .views_api import (
     add_to_cart, buy_now, order_detail, my_orders,
     cart_sync, cart_clear,
     cart_list, cart_update, cart_remove,
+    promo_assign, promo_mine, promo_validate,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -31,5 +32,8 @@ urlpatterns = [
     path('buy-now/', buy_now, name='buy_now'),
     path('orders/my/', my_orders, name='orders_my'),
     path('orders/<str:order_number>/', order_detail, name='order_detail'),
+    path('promos/assign/', promo_assign, name='promo_assign'),
+    path('promos/mine/', promo_mine, name='promo_mine'),
+    path('promos/validate/', promo_validate, name='promo_validate'),
 ] + router.urls
 
