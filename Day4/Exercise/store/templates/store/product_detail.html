@@ -339,11 +339,15 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for related in related_products %}
             <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden group">
-                <div class="relative h-48 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
-                    <div class="text-center">
-                        <i class="fas fa-image text-4xl text-indigo-300 mb-2"></i>
-                        <p class="text-indigo-500 font-medium text-sm">Product Image</p>
-                    </div>
+                <div class="relative h-48 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center overflow-hidden">
+                    {% if related.image %}
+                        <img src="{{ related.thumbnail_url|default:related.image.url }}" alt="{{ related.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    {% else %}
+                        <div class="text-center">
+                            <i class="fas fa-image text-4xl text-indigo-300 mb-2"></i>
+                            <p class="text-indigo-500 font-medium text-sm">Product Image</p>
+                        </div>
+                    {% endif %}
                 </div>
                 
                 <div class="p-4">

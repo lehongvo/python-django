@@ -51,6 +51,14 @@ def multiply(value, arg):
     except (ValueError, TypeError):
         return 0
 
+@register.filter(name='mul')
+def mul(value, arg):
+    """Multiply value by arg (alias for multiply)"""
+    try:
+        return int(float(value) * float(arg))
+    except (ValueError, TypeError):
+        return 0
+
 
 @register.filter
 def price_with_tax(price, tax_rate=0.1):

@@ -262,6 +262,30 @@ def product_detail(request, slug):
         status='published'
     ).exclude(id=product.id)[:4]
     
+    # Ensure related products have images - download if missing
+    from django.core.files.base import ContentFile
+    import requests
+    import urllib.parse
+    
+    for related in related_products:
+        if not related.image:
+            try:
+                # Get image URL based on product name
+                keywords = related.name.lower()
+                stop_words = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from']
+                words = [w for w in keywords.split() if w not in stop_words and len(w) > 2]
+                search_terms = ' '.join(words[:3]) if len(words) >= 3 else ' '.join(words[:2]) if len(words) >= 2 else keywords
+                encoded_term = urllib.parse.quote(search_terms)
+                img_url = f"https://loremflickr.com/800/600/{encoded_term}?lock={hash(related.slug) % 1000}"
+                
+                headers = {"User-Agent": "TechStoreSeeder/1.0"}
+                resp = requests.get(img_url, timeout=10, headers=headers)
+                if resp.status_code == 200:
+                    related.image.save(f"{related.slug}.jpg", ContentFile(resp.content), save=True)
+            except Exception:
+                # Silently skip if download fails
+                pass
+    
     context = {
         'product': product,
         'related_products': related_products,

@@ -1,0 +1,511 @@
+/* ===================================
+   TechStore 2025 - 3D Animations CSS
+   Premium 3D Effects for E-commerce
+   =================================== */
+
+/* ===================================
+   GLOBAL 3D SETTINGS
+   =================================== */
+:root {
+    --perspective: 1000px;
+    --perspective-origin: 50% 50%;
+    --transition-3d: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition-3d-fast: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Enable 3D transforms */
+* {
+    -webkit-perspective: var(--perspective);
+    perspective: var(--perspective);
+}
+
+/* ===================================
+   3D PRODUCT CARD ANIMATIONS
+   =================================== */
+.product-card-3d {
+    transform-style: preserve-3d;
+    transform: perspective(var(--perspective)) rotateX(0deg) rotateY(0deg);
+    transition: var(--transition-3d);
+    position: relative;
+}
+
+/* 3D Card Container */
+.product-card-3d-wrapper {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: var(--transition-3d);
+}
+
+/* Mouse Movement 3D Effect */
+.product-card-3d-wrapper:hover {
+    transform: perspective(var(--perspective)) rotateX(-5deg) rotateY(5deg) translateZ(20px);
+}
+
+/* Card Face (Front) */
+.product-card-3d-front {
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    transition: var(--transition-3d);
+}
+
+/* 3D Flip on Hover */
+.product-card-3d-flip {
+    transform-style: preserve-3d;
+    position: relative;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card-3d-flip:hover {
+    transform: rotateY(180deg);
+}
+
+/* 3D Rotate Effect */
+@keyframes rotate3d {
+    0% {
+        transform: perspective(var(--perspective)) rotateX(0deg) rotateY(0deg);
+    }
+    25% {
+        transform: perspective(var(--perspective)) rotateX(5deg) rotateY(5deg);
+    }
+    50% {
+        transform: perspective(var(--perspective)) rotateX(0deg) rotateY(0deg);
+    }
+    75% {
+        transform: perspective(var(--perspective)) rotateX(-5deg) rotateY(-5deg);
+    }
+    100% {
+        transform: perspective(var(--perspective)) rotateX(0deg) rotateY(0deg);
+    }
+}
+
+.product-card-3d-float {
+    animation: rotate3d 6s ease-in-out infinite;
+}
+
+/* 3D Hover Lift Effect */
+.product-card-3d-lift {
+    transform-style: preserve-3d;
+    transition: var(--transition-3d);
+    transform: perspective(var(--perspective)) translateZ(0);
+}
+
+.product-card-3d-lift:hover {
+    transform: perspective(var(--perspective)) translateZ(50px) rotateX(-10deg) rotateY(5deg);
+    box-shadow: 
+        0 30px 60px rgba(0, 0, 0, 0.3),
+        0 0 40px rgba(102, 126, 234, 0.4);
+}
+
+/* 3D Image Container */
+.product-image-3d {
+    transform-style: preserve-3d;
+    transition: var(--transition-3d);
+    transform: perspective(var(--perspective)) translateZ(0);
+    overflow: hidden;
+}
+
+.product-card-3d:hover .product-image-3d {
+    transform: perspective(var(--perspective)) translateZ(30px) scale(1.1);
+}
+
+.product-card-3d:hover .product-image-3d img {
+    transform: scale(1.2) rotateZ(2deg);
+}
+
+/* 3D Badge Animation */
+.discount-badge-3d {
+    transform-style: preserve-3d;
+    transform: perspective(var(--perspective)) rotateX(15deg) rotateY(-15deg) translateZ(20px);
+    transition: var(--transition-3d-fast);
+}
+
+.product-card-3d:hover .discount-badge-3d {
+    transform: perspective(var(--perspective)) rotateX(0deg) rotateY(0deg) translateZ(40px) scale(1.1);
+    animation: pulse3d 2s ease-in-out infinite;
+}
+
+@keyframes pulse3d {
+    0%, 100% {
+        transform: perspective(var(--perspective)) translateZ(40px) scale(1.1);
+        box-shadow: 0 10px 30px rgba(245, 101, 101, 0.6);
+    }
+    50% {
+        transform: perspective(var(--perspective)) translateZ(50px) scale(1.15);
+        box-shadow: 0 15px 40px rgba(245, 101, 101, 0.8);
+    }
+}
+
+/* ===================================
+   3D HERO SECTION ANIMATIONS
+   =================================== */
+.hero-3d-container {
+    perspective: 2000px;
+    perspective-origin: 50% 50%;
+    transform-style: preserve-3d;
+}
+
+.hero-3d-title {
+    transform-style: preserve-3d;
+    transform: perspective(1500px) rotateX(0deg) translateZ(0);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: heroTitle3d 8s ease-in-out infinite;
+}
+
+@keyframes heroTitle3d {
+    0%, 100% {
+        transform: perspective(1500px) rotateX(0deg) translateZ(0);
+    }
+    25% {
+        transform: perspective(1500px) rotateX(3deg) translateZ(20px);
+    }
+    50% {
+        transform: perspective(1500px) rotateX(0deg) translateZ(0);
+    }
+    75% {
+        transform: perspective(1500px) rotateX(-3deg) translateZ(20px);
+    }
+}
+
+.hero-3d-title .highlight {
+    display: inline-block;
+    transform-style: preserve-3d;
+    transform: perspective(1000px) translateZ(30px);
+    animation: highlight3d 3s ease-in-out infinite;
+}
+
+@keyframes highlight3d {
+    0%, 100% {
+        transform: perspective(1000px) translateZ(30px) rotateX(0deg);
+    }
+    50% {
+        transform: perspective(1000px) translateZ(50px) rotateX(5deg);
+    }
+}
+
+/* 3D Buttons */
+.btn-3d {
+    transform-style: preserve-3d;
+    transform: perspective(800px) translateZ(0);
+    transition: var(--transition-3d-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-3d::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transform: skewX(-25deg) translateZ(10px);
+    transition: left 0.6s;
+}
+
+.btn-3d:hover {
+    transform: perspective(800px) translateZ(20px) rotateX(-5deg);
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        0 0 30px rgba(102, 126, 234, 0.5);
+}
+
+.btn-3d:hover::before {
+    left: 100%;
+}
+
+.btn-3d:active {
+    transform: perspective(800px) translateZ(10px) rotateX(0deg);
+}
+
+/* 3D Carousel Card */
+.carousel-card-3d {
+    transform-style: preserve-3d;
+    transform: perspective(1200px) rotateY(-5deg) rotateX(5deg);
+    transition: var(--transition-3d);
+    position: relative;
+}
+
+.carousel-card-3d:hover {
+    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) translateZ(50px);
+    box-shadow: 
+        0 40px 80px rgba(0, 0, 0, 0.3),
+        0 0 50px rgba(102, 126, 234, 0.4);
+}
+
+.carousel-card-3d.active {
+    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) translateZ(30px);
+    z-index: 10;
+}
+
+/* ===================================
+   3D STAT CARD ANIMATIONS
+   =================================== */
+.stat-card-3d {
+    transform-style: preserve-3d;
+    transform: perspective(1000px) translateZ(0);
+    transition: var(--transition-3d);
+    position: relative;
+}
+
+.stat-card-3d::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transform: scaleX(0) translateZ(10px);
+    transition: transform 0.6s;
+    transform-origin: left;
+}
+
+.stat-card-3d:hover {
+    transform: perspective(1000px) translateZ(30px) rotateX(-5deg) rotateY(5deg);
+}
+
+.stat-card-3d:hover::before {
+    transform: scaleX(1) translateZ(10px);
+}
+
+.stat-number-3d {
+    display: inline-block;
+    transform-style: preserve-3d;
+    transform: perspective(500px) translateZ(0);
+    transition: var(--transition-3d-fast);
+}
+
+.stat-card-3d:hover .stat-number-3d {
+    transform: perspective(500px) translateZ(20px) scale(1.1);
+    animation: numberPop3d 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes numberPop3d {
+    0% {
+        transform: perspective(500px) translateZ(0) scale(1);
+    }
+    50% {
+        transform: perspective(500px) translateZ(30px) scale(1.2);
+    }
+    100% {
+        transform: perspective(500px) translateZ(20px) scale(1.1);
+    }
+}
+
+/* ===================================
+   3D QUICK ACTIONS OVERLAY
+   =================================== */
+.quick-actions-3d {
+    transform-style: preserve-3d;
+    transform: perspective(1000px) rotateX(90deg) translateZ(-50px);
+    opacity: 0;
+    transition: var(--transition-3d);
+}
+
+.product-card-3d:hover .quick-actions-3d {
+    transform: perspective(1000px) rotateX(0deg) translateZ(20px);
+    opacity: 1;
+}
+
+.quick-action-btn-3d {
+    transform-style: preserve-3d;
+    transform: perspective(500px) translateZ(0);
+    transition: var(--transition-3d-fast);
+}
+
+.quick-action-btn-3d:hover {
+    transform: perspective(500px) translateZ(15px) rotateY(5deg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* ===================================
+   3D FLOATING ANIMATIONS
+   =================================== */
+@keyframes float3d {
+    0%, 100% {
+        transform: perspective(1000px) translateY(0px) rotateX(0deg) rotateY(0deg) translateZ(0);
+    }
+    33% {
+        transform: perspective(1000px) translateY(-20px) rotateX(5deg) rotateY(5deg) translateZ(10px);
+    }
+    66% {
+        transform: perspective(1000px) translateY(-10px) rotateX(-5deg) rotateY(-5deg) translateZ(5px);
+    }
+}
+
+.float-3d {
+    animation: float3d 6s ease-in-out infinite;
+}
+
+/* ===================================
+   3D LOADING ANIMATIONS
+   =================================== */
+@keyframes spin3d {
+    from {
+        transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+    }
+    to {
+        transform: perspective(1000px) rotateY(360deg) rotateX(360deg);
+    }
+}
+
+.spin-3d {
+    animation: spin3d 3s linear infinite;
+    transform-style: preserve-3d;
+}
+
+/* ===================================
+   3D PARALLAX EFFECTS
+   =================================== */
+.parallax-3d {
+    transform-style: preserve-3d;
+    transform: perspective(2000px);
+    transition: transform 0.1s ease-out;
+}
+
+.parallax-3d-slow {
+    transform-style: preserve-3d;
+    transform: perspective(2000px);
+    transition: transform 0.3s ease-out;
+}
+
+/* ===================================
+   3D STAGGER ANIMATIONS
+   =================================== */
+@keyframes staggerIn3d {
+    from {
+        opacity: 0;
+        transform: perspective(1000px) translateZ(-100px) rotateX(90deg);
+    }
+    to {
+        opacity: 1;
+        transform: perspective(1000px) translateZ(0) rotateX(0deg);
+    }
+}
+
+.stagger-3d-in {
+    animation: staggerIn3d 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Stagger delays */
+.stagger-3d-in-1 { animation-delay: 0.1s; opacity: 0; }
+.stagger-3d-in-2 { animation-delay: 0.2s; opacity: 0; }
+.stagger-3d-in-3 { animation-delay: 0.3s; opacity: 0; }
+.stagger-3d-in-4 { animation-delay: 0.4s; opacity: 0; }
+.stagger-3d-in-5 { animation-delay: 0.5s; opacity: 0; }
+
+/* ===================================
+   3D GLOW EFFECTS
+   =================================== */
+.glow-3d {
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.glow-3d::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    filter: blur(20px);
+    transform: perspective(500px) translateZ(-10px);
+    transition: var(--transition-3d-fast);
+}
+
+.glow-3d:hover::before {
+    opacity: 0.8;
+    transform: perspective(500px) translateZ(10px);
+    animation: glowPulse3d 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse3d {
+    0%, 100% {
+        transform: perspective(500px) translateZ(10px) scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: perspective(500px) translateZ(20px) scale(1.1);
+        opacity: 1;
+    }
+}
+
+/* ===================================
+   3D NAVIGATION BAR
+   =================================== */
+.navbar-3d {
+    transform-style: preserve-3d;
+    transform: perspective(1000px) translateZ(0);
+    transition: var(--transition-3d-fast);
+}
+
+.navbar-3d.scrolled {
+    transform: perspective(1000px) translateZ(20px);
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.1),
+        0 0 20px rgba(102, 126, 234, 0.2);
+}
+
+/* ===================================
+   3D IMAGE ZOOM EFFECT
+   =================================== */
+.image-3d-zoom {
+    transform-style: preserve-3d;
+    transform: perspective(1200px) translateZ(0);
+    transition: var(--transition-3d);
+}
+
+.image-3d-zoom:hover {
+    transform: perspective(1200px) translateZ(50px) scale(1.15) rotateY(5deg);
+}
+
+.image-3d-zoom:hover img {
+    transform: scale(1.2);
+}
+
+/* ===================================
+   MOUSE TRACKING 3D EFFECT
+   =================================== */
+.card-tilt-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease-out;
+}
+
+/* ===================================
+   RESPONSIVE 3D ANIMATIONS
+   =================================== */
+@media (max-width: 768px) {
+    :root {
+        --perspective: 500px;
+    }
+    
+    .product-card-3d-lift:hover {
+        transform: perspective(500px) translateZ(20px) rotateX(-5deg);
+    }
+    
+    .hero-3d-title {
+        animation: none;
+        transform: none;
+    }
+}
+
+/* ===================================
+   REDUCE MOTION (ACCESSIBILITY)
+   =================================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transform: none !important;
+    }
+}
+
