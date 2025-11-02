@@ -71,7 +71,7 @@
                 <div class="relative bg-white rounded-3xl shadow-2xl p-8">
                     <!-- Product Carousel -->
                     <div id="productCarousel" class="carousel-container">
-                        {% for product in featured_products %}
+                        {% for product in featured_products|slice:":20" %}
                         <div class="carousel-item {% if forloop.first %}active{% endif %}" data-product-id="{{ product.id }}">
                             <div class="aspect-square overflow-hidden rounded-2xl mb-6 bg-gradient-to-br from-gray-50 to-gray-100 relative group">
                                 {% if product.image %}
@@ -133,8 +133,8 @@
                     </div>
                     
                     <!-- Carousel Indicators -->
-                    <div class="flex justify-center space-x-2 mt-6">
-                        {% for product in featured_products %}
+                    <div class="flex justify-center flex-wrap gap-2 mt-6 max-w-full">
+                        {% for product in featured_products|slice:":20" %}
                         <button class="carousel-indicator w-2 h-2 rounded-full {% if forloop.first %}bg-indigo-600{% else %}bg-gray-300{% endif %} transition-colors" data-slide="{{ forloop.counter0 }}"></button>
                         {% endfor %}
                     </div>
@@ -653,8 +653,8 @@ document.addEventListener('DOMContentLoaded', function() {
         showSlide(nextIndex);
     }
     
-    // Auto-advance every 3 seconds
-    setInterval(nextSlide, 3000);
+    // Auto-advance every 1.5 seconds
+    setInterval(nextSlide, 1500);
     
     // Manual navigation with indicators
     indicators.forEach((indicator, index) => {

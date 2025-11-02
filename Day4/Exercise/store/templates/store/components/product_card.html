@@ -1,13 +1,93 @@
-<div class="product-card bg-white rounded-lg shadow p-4">
-    {% if product.image %}
-        <img src="{{ product.thumbnail_url|default:product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover rounded">
-    {% endif %}
-    <h3 class="text-lg font-semibold mt-3">{{ product.name }}</h3>
-    {% if show_description %}
-        <p class="text-gray-600 text-sm mt-1">{{ product.short_description|default:product.description|truncatewords:18 }}</p>
-    {% endif %}
-    <div class="flex items-center justify-between mt-3">
-        <span class="text-indigo-600 font-bold">{% load store_filters %}{{ product.price|format_vnd }}</span>
-        <a href="{{ product.get_absolute_url }}" class="text-sm text-white bg-indigo-600 px-3 py-1 rounded">View</a>
+<div class="product-card">
+    <!-- Product Image -->
+    <div class="product-image-wrapper">
+        {% if product.image %}
+            <img src="{{ product.thumbnail_url|default:product.image.url }}" alt="{{ product.name }}">
+        {% else %}
+            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+                <i class="fas fa-image text-6xl text-indigo-300"></i>
+            </div>
+        {% endif %}
+        
+        <!-- Discount Badge -->
+        {% if product.computed_discount_percent > 0 %}
+        <div class="discount-badge">
+            <i class="fas fa-tag mr-1"></i>{{ product.computed_discount_percent|floatformat:0 }}% OFF
+        </div>
+        {% endif %}
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{{ product.get_absolute_url }}" class="btn-quick-view">
+                <i class="fas fa-eye"></i> Quick View
+            </a>
+            {% if user.is_authenticated %}
+            <button type="button" onclick="addToCart({{ product.id }})" class="btn-add-cart">
+                <i class="fas fa-shopping-cart"></i> Add to Cart
+            </button>
+            {% else %}
+            <a href="/login/?next={{ request.path }}" class="btn-add-cart">
+                <i class="fas fa-shopping-cart"></i> Add to Cart
+            </a>
+            {% endif %}
+            <button type="button" data-product-id="{{ product.id }}" class="btn-wishlist add-to-wishlist-btn">
+                <i class="far fa-heart"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Product Info -->
+    <div class="product-info">
+        <span class="product-category">{{ product.category.name }}</span>
+        
+        <h3 class="product-name">{{ product.name }}</h3>
+        
+        {% if show_description %}
+        <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ product.short_description|default:product.description|truncatewords:18 }}</p>
+        {% endif %}
+        
+        <!-- Rating -->
+        <div class="product-rating">
+            <div class="stars">
+                {% for i in "12345" %}
+                <i class="fas fa-star"></i>
+                {% endfor %}
+            </div>
+            <span class="review-count">(4.9) {{ product.stock|add:1000 }}+ reviews</span>
+        </div>
+        
+        <!-- Price Section -->
+        <div class="product-price">
+            <div class="price-row">
+                <span class="current-price">{% load store_filters %}{{ product.price|format_vnd }}</span>
+                {% if product.compare_price %}
+                <span class="compare-price">{{ product.compare_price|format_vnd }}</span>
+                {% endif %}
+            </div>
+            
+            <!-- Stock Badge -->
+            <div class="stock-badge {% if product.is_in_stock %}in-stock{% else %}out-of-stock{% endif %}">
+                <i class="fas fa-{% if product.is_in_stock %}check-circle{% else %}times-circle{% endif %}"></i>
+                <span>{% if product.is_in_stock %}In Stock{% else %}Out of Stock{% endif %}</span>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="product-actions">
+                <a href="{{ product.get_absolute_url }}" class="btn btn-primary">
+                    <i class="fas fa-eye"></i> View Details
+                </a>
+                {% if product.is_in_stock %}
+                {% if user.is_authenticated %}
+                <button type="button" onclick="addToCart({{ product.id }})" class="btn btn-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </button>
+                {% else %}
+                <a href="/login/?next={{ request.path }}" class="btn btn-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>

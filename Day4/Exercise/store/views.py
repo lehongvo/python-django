@@ -160,7 +160,7 @@ def home(request):
     featured_products = (
         Product.objects.filter(status='published')
         .annotate(computed_discount_percent=computed_discount_expr)
-        .order_by('-computed_discount_percent', '-is_featured')[:6]
+        .order_by('-computed_discount_percent', '-is_featured')[:20]
     )
     try:
         cat_limit = int(request.GET.get('cat_limit', 6))

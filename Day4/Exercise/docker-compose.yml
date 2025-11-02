@@ -21,6 +21,7 @@ services:
     command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
+      - media_data:/app/media
     ports:
       - "8001:8000"
     environment:
@@ -52,4 +53,5 @@ services:
 
 volumes:
   postgres_data:
+  media_data:
 
