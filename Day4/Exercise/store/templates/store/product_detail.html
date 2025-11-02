@@ -343,10 +343,10 @@
                     {% if related.image %}
                         <img src="{{ related.thumbnail_url|default:related.image.url }}" alt="{{ related.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                     {% else %}
-                        <div class="text-center">
-                            <i class="fas fa-image text-4xl text-indigo-300 mb-2"></i>
-                            <p class="text-indigo-500 font-medium text-sm">Product Image</p>
-                        </div>
+                    <div class="text-center">
+                        <i class="fas fa-image text-4xl text-indigo-300 mb-2"></i>
+                        <p class="text-indigo-500 font-medium text-sm">Product Image</p>
+                    </div>
                     {% endif %}
                 </div>
                 

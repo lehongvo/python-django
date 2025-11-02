@@ -49,7 +49,7 @@
             </button>
             
             <!-- Close Link -->
-            <button class="voucher-popup-link" onclick="document.getElementById('voucherOverlay').classList.remove('active'); document.getElementById('voucherPopup').classList.remove('active');">
+            <button id="maybeLaterBtn" class="voucher-popup-link">
                 Maybe later
             </button>
         </div>
@@ -634,6 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const voucherCountEl = document.getElementById('voucherCount');
     const useVoucherBtn = document.getElementById('useVoucherBtn');
     const closeVoucherBtn = document.getElementById('closeVoucherBtn');
+    const maybeLaterBtn = document.getElementById('maybeLaterBtn');
     
     // Debug: Check if elements exist
     if (!voucherPopup || !voucherOverlay) {
@@ -732,8 +733,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Close popup function
     function closeVoucherPopup() {
+        if (!voucherOverlay || !voucherPopup) return;
+        
+        // Remove classes
         voucherOverlay.classList.remove('active');
         voucherPopup.classList.remove('active');
+        
+        // Clear inline styles (from force show)
+        voucherOverlay.style.opacity = '';
+        voucherOverlay.style.visibility = '';
+        voucherOverlay.style.pointerEvents = '';
+        voucherPopup.style.opacity = '';
+        voucherPopup.style.visibility = '';
+        
+        // Set session storage so it won't show again
+        sessionStorage.setItem('voucherPopupShown', 'true');
+        
+        console.log('Popup closed');
     }
     
     // Navigate to products page
@@ -750,9 +766,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Close button event
     if (closeVoucherBtn) {
         closeVoucherBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
+            closeVoucherPopup();
+        });
+    }
+    
+    // Maybe later button event
+    if (maybeLaterBtn) {
+        maybeLaterBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             closeVoucherPopup();
         });
     }
@@ -768,7 +795,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Close on ESC key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && voucherPopup.classList.contains('active')) {
+        if (e.key === 'Escape' && voucherPopup && voucherPopup.classList.contains('active')) {
             closeVoucherPopup();
         }
     });
