@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',  # API Documentation
     'corsheaders',
     'social_django',
     'store',  # Our e-commerce app
@@ -74,7 +75,8 @@ REST_FRAMEWORK = {
         'order': '30/min',         # order lookups
     },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20
+    'PAGE_SIZE': 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 
@@ -208,6 +210,20 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 # Global API key (fallback to provided value; override via env in production)
 GLOBAL_API_KEY = os.environ.get('GLOBAL_API_KEY', '0x00000FC78106799b5b1dbD71f206d8f0218B28fe')
 
+# drf-spectacular settings (API Documentation)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'TechStore 2025 API',
+    'DESCRIPTION': 'E-commerce API Documentation for TechStore 2025',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': '/api/',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'AUTHENTICATION_WHITELIST': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'store.authentication.CookieJWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+}
 
 # Logging configuration: surface store.email logs to console
 LOGGING = {
