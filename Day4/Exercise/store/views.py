@@ -958,6 +958,17 @@ def my_unused_promos_api(request):
     return JsonResponse({'promos': list(codes)})
 
 
+def voucher_count_api(request):
+    """Return the count of unused vouchers for the current user.
+    Returns 0 if not authenticated.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'count': 0})
+    
+    count = PromoCode.objects.filter(user=request.user, is_used=False).count()
+    return JsonResponse({'count': count})
+
+
 # Support pages
 def help_center(request):
     return render(request, 'store/support_help_center.html')

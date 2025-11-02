@@ -4,6 +4,64 @@
 {% block title %}{{ site_name }} - Premium E-commerce Platform{% endblock %}
 
 {% block content %}
+<!-- Voucher Popup -->
+<div id="voucherOverlay" class="voucher-popup-overlay">
+    <div id="voucherPopup" class="voucher-popup">
+        <button id="closeVoucherBtn" class="voucher-popup-close" aria-label="Close">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="voucher-popup-content">
+            <!-- Animated Icon -->
+            <div class="voucher-popup-icon">
+                <div class="voucher-icon-circle">
+                    <div class="voucher-icon-inner">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="voucher-sparkles">
+                        <span class="sparkle sparkle-1">✨</span>
+                        <span class="sparkle sparkle-2">✨</span>
+                        <span class="sparkle sparkle-3">✨</span>
+                        <span class="sparkle sparkle-4">✨</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Title with Animated Count -->
+            <h3 class="voucher-popup-title">
+                You have 
+                <span id="voucherCount" class="voucher-count-highlight">
+                    <span class="count-number">0</span>
+                </span> 
+                active voucher<span id="voucherPlural">s</span>!
+            </h3>
+            
+            <!-- Message -->
+            <p class="voucher-popup-message">
+                Don't miss out on exclusive savings! Use your vouchers now to get amazing discounts on premium products.
+            </p>
+            
+            <!-- CTA Button -->
+            <button id="useVoucherBtn" class="voucher-popup-btn">
+                <span class="btn-text">Shop Now & Save</span>
+                <i class="fas fa-arrow-right btn-icon"></i>
+                <div class="btn-shine"></div>
+            </button>
+            
+            <!-- Close Link -->
+            <button class="voucher-popup-link" onclick="document.getElementById('voucherOverlay').classList.remove('active'); document.getElementById('voucherPopup').classList.remove('active');">
+                Maybe later
+            </button>
+        </div>
+        
+        <div class="voucher-popup-decoration">
+            <div class="voucher-decoration-circle circle-1"></div>
+            <div class="voucher-decoration-circle circle-2"></div>
+            <div class="voucher-decoration-circle circle-3"></div>
+        </div>
+    </div>
+</div>
+
 <!-- Hero Section -->
 <section class="premium-hero">
     <!-- Background Pattern -->
@@ -25,12 +83,12 @@
                     Shop the Best
                     <span class="highlight">Premium Products</span>
                     Online
-                </h1>
+            </h1>
                 
                 <p class="premium-hero-subtitle animate-fade-in-up animate-delay-200">
                     Discover exceptional quality products with unbeatable prices. 
                     Fast shipping, secure checkout, and 24/7 support.
-                </p>
+            </p>
                 
                 <div class="premium-cta-group animate-fade-in-up animate-delay-300">
                     <a href="{% url 'store:product_list' %}" class="premium-cta-primary">
@@ -41,7 +99,7 @@
                     <a href="{% url 'store:category_list' %}" class="premium-cta-secondary">
                         <i class="fas fa-th-large"></i>
                         <span>Browse Categories</span>
-                    </a>
+                </a>
                 </div>
                 
                 <!-- Trust Indicators -->
@@ -63,10 +121,10 @@
                             <h3>Secure Payment</h3>
                             <p>SSL encrypted</p>
                         </div>
-                    </div>
-                </div>
             </div>
-            
+        </div>
+    </div>
+    
             <!-- Right - Featured Product Carousel -->
             {% if featured_products %}
             <div class="relative">
@@ -141,9 +199,9 @@
                         {% endfor %}
                     </div>
                 </div>
-            </div>
+    </div>
             {% endif %}
-        </div>
+    </div>
     </div>
 </section>
 
@@ -569,6 +627,156 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Voucher Popup
+document.addEventListener('DOMContentLoaded', function() {
+    const voucherPopup = document.getElementById('voucherPopup');
+    const voucherOverlay = document.getElementById('voucherOverlay');
+    const voucherCountEl = document.getElementById('voucherCount');
+    const useVoucherBtn = document.getElementById('useVoucherBtn');
+    const closeVoucherBtn = document.getElementById('closeVoucherBtn');
+    
+    // Debug: Check if elements exist
+    if (!voucherPopup || !voucherOverlay) {
+        console.error('Voucher popup elements not found!');
+        return;
+    }
+    
+    // Check if user has seen popup in this session (only after closing)
+    // Comment out for testing - uncomment later
+    // const popupShown = sessionStorage.getItem('voucherPopupShown');
+    // if (popupShown) {
+    //     return;
+    // }
+    
+    // Fetch voucher count from API
+    async function fetchVoucherCount() {
+        try {
+            const apiUrl = '{% url "store:voucher_count_api" %}';
+            console.log('Fetching voucher count from:', apiUrl);
+            
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin'
+            });
+            
+            console.log('API Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            const data = await response.json();
+            console.log('Voucher count received:', data);
+            return data.count || 0;
+        } catch (error) {
+            console.error('Error fetching voucher count:', error);
+            return 0;
+        }
+    }
+    
+    // Show popup function
+    async function showVoucherPopup() {
+        const count = await fetchVoucherCount();
+        console.log('Voucher count:', count);
+        
+        // Always show popup for testing (remove || true after testing)
+        if (count > 0 || true) {
+            if (voucherCountEl) {
+                const countNumber = voucherCountEl.querySelector('.count-number');
+                if (countNumber) {
+                    countNumber.textContent = count > 0 ? count : 'X';
+                } else {
+                    voucherCountEl.textContent = count > 0 ? count : 'X';
+                }
+                
+                // Update plural
+                const pluralEl = document.getElementById('voucherPlural');
+                if (pluralEl) {
+                    pluralEl.textContent = count === 1 ? '' : 's';
+                }
+            }
+            
+            // Show popup after 1.5 seconds delay
+            setTimeout(() => {
+                console.log('Showing popup now...', {
+                    overlay: voucherOverlay,
+                    popup: voucherPopup,
+                    overlayClasses: voucherOverlay.className,
+                    popupClasses: voucherPopup.className
+                });
+                
+                if (voucherOverlay && voucherPopup) {
+                    voucherOverlay.classList.add('active');
+                    voucherPopup.classList.add('active');
+                    
+                    // Force show for debugging
+                    voucherOverlay.style.opacity = '1';
+                    voucherOverlay.style.visibility = 'visible';
+                    voucherOverlay.style.pointerEvents = 'auto';
+                    voucherPopup.style.opacity = '1';
+                    voucherPopup.style.visibility = 'visible';
+                    
+                    console.log('Popup should be visible now');
+                } else {
+                    console.error('Elements missing when trying to show popup');
+                }
+                // sessionStorage.setItem('voucherPopupShown', 'true');
+            }, 1500);
+        } else {
+            console.log('No vouchers found, not showing popup');
+        }
+    }
+    
+    // Close popup function
+    function closeVoucherPopup() {
+        voucherOverlay.classList.remove('active');
+        voucherPopup.classList.remove('active');
+    }
+    
+    // Navigate to products page
+    function goToProducts() {
+        window.location.href = '{% url "store:product_list" %}';
+    }
+    
+    // Event listeners
+    if (useVoucherBtn) {
+        useVoucherBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeVoucherPopup();
+            goToProducts();
+        });
+    }
+    
+    if (closeVoucherBtn) {
+        closeVoucherBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeVoucherPopup();
+        });
+    }
+    
+    // Close on overlay click
+    if (voucherOverlay) {
+        voucherOverlay.addEventListener('click', function(e) {
+            if (e.target === voucherOverlay) {
+                closeVoucherPopup();
+            }
+        });
+    }
+    
+    // Close on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && voucherPopup.classList.contains('active')) {
+            closeVoucherPopup();
+        }
+    });
+    
+    // Initialize popup
+    showVoucherPopup();
+});
+
 </script>
 {% endblock %}
 
@@ -622,6 +830,456 @@ document.addEventListener('DOMContentLoaded', function() {
     
     .carousel-indicator:hover {
         background-color: #6366f1 !important;
+    }
+    
+    /* ===================================
+       VOUCHER POPUP - Premium Professional Design
+       =================================== */
+    .voucher-popup-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(12px);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+        animation: overlayFadeIn 0.4s ease-out;
+    }
+    
+    @keyframes overlayFadeIn {
+        from {
+            opacity: 0;
+            backdrop-filter: blur(0px);
+        }
+        to {
+            opacity: 1;
+            backdrop-filter: blur(12px);
+        }
+    }
+    
+    .voucher-popup-overlay.active {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+    
+    .voucher-popup {
+        position: relative;
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%);
+        border-radius: 32px;
+        max-width: 520px;
+        width: 100%;
+        box-shadow: 
+            0 25px 50px -12px rgba(0, 0, 0, 0.25),
+            0 0 0 1px rgba(255, 255, 255, 0.1),
+            0 0 80px rgba(102, 126, 234, 0.15);
+        overflow: hidden;
+        transform: scale(0.85) translateY(30px) rotateX(10deg);
+        opacity: 0;
+        transition: all 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        perspective: 1000px;
+    }
+    
+    .voucher-popup.active {
+        transform: scale(1) translateY(0) rotateX(0deg);
+        opacity: 1;
+        animation: popupEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    @keyframes popupEntrance {
+        0% {
+            transform: scale(0.8) translateY(50px) rotateX(15deg);
+            opacity: 0;
+        }
+        60% {
+            transform: scale(1.05) translateY(-5px) rotateX(-2deg);
+        }
+        100% {
+            transform: scale(1) translateY(0) rotateX(0deg);
+            opacity: 1;
+        }
+    }
+    
+    .voucher-popup-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.04);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        font-size: 18px;
+        transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 10;
+    }
+    
+    .voucher-popup-close:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        transform: rotate(90deg) scale(1.1);
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+    
+    .voucher-popup-content {
+        padding: 56px 40px 40px;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .voucher-popup-icon {
+        margin-bottom: 32px;
+        position: relative;
+    }
+    
+    .voucher-icon-circle {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 
+            0 20px 40px -10px rgba(102, 126, 234, 0.4),
+            0 0 0 8px rgba(102, 126, 234, 0.1),
+            inset 0 2px 10px rgba(255, 255, 255, 0.3);
+        animation: voucher-icon-float 3s ease-in-out infinite;
+        overflow: visible;
+    }
+    
+    @keyframes voucher-icon-float {
+        0%, 100% {
+            transform: translateY(0) scale(1);
+            box-shadow: 
+                0 20px 40px -10px rgba(102, 126, 234, 0.4),
+                0 0 0 8px rgba(102, 126, 234, 0.1);
+        }
+        50% {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 
+                0 30px 60px -10px rgba(102, 126, 234, 0.5),
+                0 0 0 12px rgba(102, 126, 234, 0.15);
+        }
+    }
+    
+    .voucher-icon-inner {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 42px;
+        color: white;
+        animation: voucher-icon-rotate 4s linear infinite;
+    }
+    
+    @keyframes voucher-icon-rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .voucher-sparkles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+    
+    .sparkle {
+        position: absolute;
+        font-size: 24px;
+        animation: sparkle-float 2s ease-in-out infinite;
+        opacity: 0.8;
+    }
+    
+    .sparkle-1 {
+        top: -10px;
+        left: 20%;
+        animation-delay: 0s;
+    }
+    
+    .sparkle-2 {
+        top: 10%;
+        right: -5px;
+        animation-delay: 0.5s;
+    }
+    
+    .sparkle-3 {
+        bottom: 10%;
+        left: -5px;
+        animation-delay: 1s;
+    }
+    
+    .sparkle-4 {
+        bottom: -10px;
+        right: 20%;
+        animation-delay: 1.5s;
+    }
+    
+    @keyframes sparkle-float {
+        0%, 100% {
+            transform: translate(0, 0) scale(1) rotate(0deg);
+            opacity: 0.8;
+        }
+        50% {
+            transform: translate(10px, -10px) scale(1.2) rotate(180deg);
+            opacity: 1;
+        }
+    }
+    
+    .voucher-popup-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #111827;
+        margin-bottom: 16px;
+        line-height: 1.2;
+        letter-spacing: -0.8px;
+        animation: titleSlideIn 0.6s ease-out 0.2s both;
+    }
+    
+    @keyframes titleSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .voucher-count-highlight {
+        display: inline-block;
+        position: relative;
+        margin: 0 4px;
+    }
+    
+    .count-number {
+        font-size: 48px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: inline-block;
+        animation: countPulse 1s ease-in-out infinite;
+        text-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
+        position: relative;
+    }
+    
+    @keyframes countPulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+    
+    #voucherPlural {
+        font-size: 32px;
+    }
+    
+    .voucher-popup-message {
+        font-size: 17px;
+        color: #4b5563;
+        margin-bottom: 36px;
+        line-height: 1.7;
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+        animation: messageSlideIn 0.6s ease-out 0.4s both;
+    }
+    
+    @keyframes messageSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .voucher-popup-btn {
+        width: 100%;
+        padding: 18px 36px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        background-size: 200% 100%;
+        color: white;
+        border: none;
+        border-radius: 16px;
+        font-size: 18px;
+        font-weight: 800;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 
+            0 12px 30px -8px rgba(102, 126, 234, 0.5),
+            0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+            0 0 40px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+        animation: buttonSlideIn 0.6s ease-out 0.6s both;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    @keyframes buttonSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .voucher-popup-btn:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 
+            0 20px 40px -8px rgba(102, 126, 234, 0.6),
+            0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+            0 0 60px rgba(102, 126, 234, 0.4);
+        background-position: 100% 0;
+    }
+    
+    .voucher-popup-btn:active {
+        transform: translateY(-1px) scale(0.98);
+    }
+    
+    .voucher-popup-btn .btn-text {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .voucher-popup-btn .btn-icon {
+        position: relative;
+        z-index: 2;
+        transition: transform 300ms ease;
+    }
+    
+    .voucher-popup-btn:hover .btn-icon {
+        transform: translateX(4px);
+    }
+    
+    .btn-shine {
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transition: left 0.6s ease;
+    }
+    
+    .voucher-popup-btn:hover .btn-shine {
+        left: 100%;
+    }
+    
+    .voucher-popup-link {
+        background: none;
+        border: none;
+        color: #9ca3af;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 10px 16px;
+        transition: all 300ms ease;
+        text-decoration: none;
+        border-radius: 8px;
+    }
+    
+    .voucher-popup-link:hover {
+        color: #6b7280;
+        background: rgba(0, 0, 0, 0.04);
+    }
+    
+    .voucher-popup-decoration {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    .voucher-decoration-circle {
+        position: absolute;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    }
+    
+    .voucher-decoration-circle.circle-1 {
+        width: 200px;
+        height: 200px;
+        top: -100px;
+        right: -100px;
+    }
+    
+    .voucher-decoration-circle.circle-2 {
+        width: 150px;
+        height: 150px;
+        bottom: -75px;
+        left: -75px;
+    }
+    
+    .voucher-decoration-circle.circle-3 {
+        width: 100px;
+        height: 100px;
+        top: 50%;
+        right: 20px;
+        transform: translateY(-50%);
+    }
+    
+    /* Responsive */
+    @media (max-width: 640px) {
+        .voucher-popup {
+            max-width: 90%;
+            border-radius: 20px;
+        }
+        
+        .voucher-popup-content {
+            padding: 40px 24px 24px;
+        }
+        
+        .voucher-popup-title {
+            font-size: 24px;
+        }
+        
+        .voucher-count-highlight {
+            font-size: 28px;
+        }
+        
+        .voucher-icon-circle {
+            width: 64px;
+            height: 64px;
+            font-size: 28px;
+        }
     }
     
 </style>

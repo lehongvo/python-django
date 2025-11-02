@@ -27,6 +27,7 @@ urlpatterns = [
     path('track-order/', views.order_tracking, name='order_tracking'),
     # User promo codes API (unused only)
     path('api/my/unused-promos/', views.my_unused_promos_api, name='my_unused_promos_api'),
+    path('api/voucher-count/', views.voucher_count_api, name='voucher_count_api'),
     # Support pages
     path('support/help-center/', views.help_center, name='help_center'),
     path('support/contact/', views.contact_us, name='contact_us'),
