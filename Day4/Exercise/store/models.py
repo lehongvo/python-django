@@ -278,6 +278,8 @@ class PromoCode(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        verbose_name = 'Promo Code'
+        verbose_name_plural = 'Promo Codes'
         indexes = [
             models.Index(fields=['promo_code', 'is_used']),
             models.Index(fields=['user', 'is_used']),

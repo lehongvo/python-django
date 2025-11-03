@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils import timezone
-from .models import Category, Tag, Product, Customer, Order, OrderItem, Cart
+from .models import Category, Tag, Product, Customer, Order, OrderItem, Cart, PromoCode
 
 
 @admin.register(Category)
@@ -138,6 +138,16 @@ class CartAdmin(admin.ModelAdmin):
     list_filter = ['created_at', 'updated_at']
     search_fields = ['customer__name', 'customer__email', 'product__name']
     readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display = ['promo_code', 'user', 'promo_amount', 'is_used', 'created_at']
+    list_filter = ['is_used', 'created_at', 'promo_amount']
+    search_fields = ['promo_code', 'user__email', 'user__username']
+    readonly_fields = ['created_at', 'updated_at']
+    list_editable = ['is_used']
+    date_hierarchy = 'created_at'
 
 
 # Customize Admin Site
