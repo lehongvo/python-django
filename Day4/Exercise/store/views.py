@@ -255,37 +255,24 @@ def product_list(request):
 
 
 def product_detail(request, slug):
-    """Product detail page"""
-    product = get_object_or_404(Product, slug=slug, status='published')
-    related_products = Product.objects.filter(
-        category=product.category,
-        status='published'
-    ).exclude(id=product.id)[:4]
-    
-    # Ensure related products have images - download if missing
-    from django.core.files.base import ContentFile
-    import requests
-    import urllib.parse
-    
-    for related in related_products:
-        if not related.image:
-            try:
-                # Get image URL based on product name
-                keywords = related.name.lower()
-                stop_words = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from']
-                words = [w for w in keywords.split() if w not in stop_words and len(w) > 2]
-                search_terms = ' '.join(words[:3]) if len(words) >= 3 else ' '.join(words[:2]) if len(words) >= 2 else keywords
-                encoded_term = urllib.parse.quote(search_terms)
-                img_url = f"https://loremflickr.com/800/600/{encoded_term}?lock={hash(related.slug) % 1000}"
-                
-                headers = {"User-Agent": "TechStoreSeeder/1.0"}
-                resp = requests.get(img_url, timeout=10, headers=headers)
-                if resp.status_code == 200:
-                    related.image.save(f"{related.slug}.jpg", ContentFile(resp.content), save=True)
-            except Exception:
-                # Silently skip if download fails
-                pass
-    
+    """Product detail page (fast render, no on-request image downloads)."""
+    # Use select_related for category to avoid extra queries in template
+    try:
+        product = Product.objects.select_related('category').get(slug=slug, status='published')
+    except Product.DoesNotExist:
+        return render(request, 'store/product_detail.html', {'product': None}, status=404)
+
+    # Preload a few related products efficiently
+    related_products = (
+        Product.objects
+        .select_related('category')
+        .filter(category=product.category, status='published')
+        .exclude(id=product.id)[:4]
+    )
+
+    # IMPORTANT: Avoid network calls during request handling.
+    # Image backfilling is handled by management command `download_product_images.py`.
+
     context = {
         'product': product,
         'related_products': related_products,
