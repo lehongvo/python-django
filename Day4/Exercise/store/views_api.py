@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view, action, authentication_classes, 
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.permissions import AllowAny
 from rest_framework.authentication import SessionAuthentication
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return  # disable CSRF checks for this auth
@@ -70,6 +71,22 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [ApiKeyPermission, IsAuthenticatedOrReadOnly]
     queryset = Product.objects.select_related('category').prefetch_related('tags')
     
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='category', description='Filter by category slug', required=False, type=str),
+            OpenApiParameter(name='search', description='Full-text search in name/description', required=False, type=str),
+            OpenApiParameter(name='featured', description="When 'true', only featured products", required=False, type=str),
+        ],
+        summary='List products',
+        description='Supports filtering by category, search query, and featured flag.'
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @extend_schema(summary='Retrieve a product by ID')
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+    
     def get_queryset(self):
         queryset = Product.objects.filter(status='published')
         
@@ -130,8 +147,76 @@ class CategoryViewSet(viewsets.ModelViewSet):
         products = Product.objects.filter(category=category, status='published')
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
+    
+    @extend_schema(summary='List categories')
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @extend_schema(summary='Retrieve a category by ID')
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'product_id': {
+                    'type': 'integer',
+                    'description': 'Product ID to add to cart',
+                    'example': 1
+                },
+                'quantity': {
+                    'type': 'integer',
+                    'description': 'Quantity to add (default: 1)',
+                    'example': 1,
+                    'default': 1,
+                    'minimum': 1
+                }
+            },
+            'required': ['product_id']
+        }
+    },
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string', 'example': 'Added 1 x Product Name to cart'},
+                'product': {'type': 'object'},
+                'quantity': {'type': 'integer', 'example': 1},
+                'total': {'type': 'number', 'example': 99.99}
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string', 'example': 'Product ID is required'}
+            }
+        },
+        401: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string', 'example': 'Please log in to add items to cart'},
+                'requires_login': {'type': 'boolean'},
+                'login_url': {'type': 'string'}
+            }
+        },
+        404: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string', 'example': 'Product not found'}
+            }
+        }
+    },
+    examples=[
+        OpenApiExample(
+            'Add to Cart',
+            value={'product_id': 1, 'quantity': 2},
+            request_only=True
+        ),
+    ]
+)
 @api_view(['POST'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, CsrfExemptSessionAuthentication])
@@ -199,6 +284,39 @@ def add_to_cart(request):
 add_to_cart.throttle_scope = 'cart'
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'product_id': {'type': 'integer', 'example': 1},
+                'quantity': {'type': 'integer', 'default': 1, 'minimum': 1}
+            },
+            'required': ['product_id']
+        }
+    },
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string'},
+                'product': {'type': 'object'},
+                'quantity': {'type': 'integer'},
+                'total': {'type': 'number'},
+                'redirect': {'type': 'string', 'example': '/checkout/?product=1&quantity=1'}
+            }
+        },
+        401: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'},
+                'requires_login': {'type': 'boolean'},
+                'login_url': {'type': 'string'}
+            }
+        }
+    },
+    summary='Buy product immediately'
+)
 @api_view(['POST'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
@@ -251,6 +369,13 @@ def buy_now(request):
 buy_now.throttle_scope = 'buy'
 
 
+@extend_schema(
+    responses={
+        200: {'type': 'object'},
+        404: {'type': 'object', 'properties': {'error': {'type': 'string'}}}
+    },
+    summary='Get order details by order number'
+)
 @api_view(['GET'])
 @permission_classes([ApiKeyPermission, AllowAny])
 @throttle_classes([ScopedRateThrottle])
@@ -268,6 +393,18 @@ def order_detail(request, order_number):
     return Response(serializer.data)
 
 order_detail.throttle_scope = 'order'
+@extend_schema(
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'orders': {'type': 'array', 'items': {'type': 'object'}},
+                'count': {'type': 'integer'}
+            }
+        }
+    },
+    summary='List current user orders'
+)
 @api_view(['GET'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
@@ -311,6 +448,29 @@ my_orders.throttle_scope = 'order'
 
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'cart': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'product_id': {'type': 'integer'},
+                            'quantity': {'type': 'integer', 'minimum': 1}
+                        },
+                        'required': ['product_id', 'quantity']
+                    }
+                }
+            },
+            'required': ['cart']
+        }
+    },
+    responses={200: {'type': 'object', 'properties': {'message': {'type': 'string'}}}},
+    summary='Sync client cart to server'
+)
 @api_view(['POST'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
@@ -361,6 +521,10 @@ def cart_sync(request):
 cart_sync.throttle_scope = 'cart'
 
 
+@extend_schema(
+    responses={200: {'type': 'object', 'properties': {'message': {'type': 'string'}}}},
+    summary='Clear cart for logged out user (client-side)'
+)
 @api_view(['POST'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
@@ -373,6 +537,19 @@ def cart_clear(request):
 cart_clear.throttle_scope = 'cart'
 
 
+@extend_schema(
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'items': {'type': 'array', 'items': {'type': 'object'}},
+                'count': {'type': 'integer'},
+                'subtotal': {'type': 'number'}
+            }
+        }
+    },
+    summary='Get current user cart items'
+)
 @api_view(['GET'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
@@ -414,6 +591,20 @@ def cart_list(request):
 cart_list.throttle_scope = 'cart'
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'product_id': {'type': 'integer'},
+                'quantity': {'type': 'integer'}
+            },
+            'required': ['product_id', 'quantity']
+        }
+    },
+    responses={200: {'type': 'object', 'properties': {'message': {'type': 'string'}, 'quantity': {'type': 'integer'}}}},
+    summary='Set quantity for a cart item'
+)
 @api_view(['POST'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
@@ -449,6 +640,17 @@ def cart_update(request):
 cart_update.throttle_scope = 'cart'
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {'product_id': {'type': 'integer'}},
+            'required': ['product_id']
+        }
+    },
+    responses={200: {'type': 'object', 'properties': {'message': {'type': 'string'}}}},
+    summary='Remove a cart item'
+)
 @api_view(['POST'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
@@ -475,6 +677,10 @@ def cart_remove(request):
 cart_remove.throttle_scope = 'cart'
 
 
+@extend_schema(
+    responses={200: {'type': 'object', 'properties': {'promo_code': {'type': 'string'}, 'promo_amount': {'type': 'number'}}}},
+    summary='Assign a promo code to current user'
+)
 @api_view(['POST'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
@@ -492,6 +698,10 @@ def promo_assign(request):
 
 promo_assign.throttle_scope = 'auth'
 
+@extend_schema(
+    responses={200: {'type': 'object', 'properties': {'promo_code': {'type': 'string', 'nullable': True}, 'promo_amount': {'type': 'number', 'nullable': True}, 'is_used': {'type': 'boolean', 'nullable': True}}}},
+    summary='Get my assigned promo code'
+)
 @api_view(['GET'])
 @throttle_classes([ScopedRateThrottle])
 @authentication_classes([CookieJWTAuthentication, JWTAuthentication, SessionAuthentication])
@@ -505,6 +715,17 @@ def promo_mine(request):
         return Response({'promo_code': None})
     return Response({'promo_code': obj.promo_code, 'promo_amount': obj.promo_amount, 'is_used': obj.is_used})
 
+@extend_schema(
+    parameters=[],
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {'promo_code': {'type': 'string', 'example': 'WELCOME10'}},
+        }
+    },
+    responses={200: {'type': 'object', 'properties': {'valid': {'type': 'boolean'}, 'promo_amount': {'type': 'number'}, 'promo_code': {'type': 'string'}}}, 400: {'type': 'object', 'properties': {'error': {'type': 'string'}}}},
+    summary='Validate a promo code'
+)
 @csrf_exempt
 @api_view(['POST', 'GET'])
 @throttle_classes([ScopedRateThrottle])

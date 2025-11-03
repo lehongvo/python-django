@@ -1,11 +1,32 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
 from .models import Product, Category, Tag, Order, OrderItem, Customer
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'Category Example',
+            value={
+                'id': 10,
+                'name': 'Laptops',
+                'slug': 'laptops',
+                'description': 'Portable computers',
+                'is_active': True,
+            }
+        )
+    ]
+)
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'description', 'is_active']
+        extra_kwargs = {
+            'name': {'help_text': 'Display name of the category'},
+            'slug': {'help_text': 'URL-friendly unique identifier'},
+            'description': {'help_text': 'Optional description'},
+            'is_active': {'help_text': 'Whether this category is visible'},
+        }
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -14,6 +35,32 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug']
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'Product Example',
+            value={
+                'id': 101,
+                'name': 'MacBook Pro 14',
+                'slug': 'macbook-pro-14',
+                'description': 'High‑performance laptop',
+                'short_description': 'M3 Pro, 16GB RAM, 512GB',
+                'price': '1999.00',
+                'compare_price': '2199.00',
+                'stock': 25,
+                'sku': 'MBP14-2025',
+                'category': {
+                    'id': 10, 'name': 'Laptops', 'slug': 'laptops', 'description': 'Portable computers', 'is_active': True
+                },
+                'tags': [{'id': 1, 'name': 'Apple', 'slug': 'apple'}],
+                'status': 'published',
+                'is_featured': True,
+                'created_at': '2025-01-01T12:00:00Z',
+                'updated_at': '2025-01-05T12:00:00Z'
+            }
+        )
+    ]
+)
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
@@ -29,8 +76,27 @@ class ProductSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['sku', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'name': {'help_text': 'Product name'},
+            'slug': {'help_text': 'URL slug (unique)'},
+            'description': {'help_text': 'Full product description'},
+            'short_description': {'help_text': 'Short summary for listings'},
+            'price': {'help_text': 'Current sale price'},
+            'compare_price': {'help_text': 'Strikethrough/old price for comparison'},
+            'stock': {'help_text': 'Inventory units available'},
+            'status': {'help_text': "Publication status: 'draft' | 'published' | 'out_of_stock'"},
+            'is_featured': {'help_text': 'Show in featured sections'},
+        }
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'OrderItem Example',
+            value={'id': 1, 'product': {'id': 101, 'name': 'MacBook Pro 14', 'slug': 'macbook-pro-14'}, 'quantity': 2, 'price': '1999.00', 'subtotal': '3998.00'}
+        )
+    ]
+)
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
     product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), write_only=True, source='product')
@@ -39,8 +105,32 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = ['id', 'product', 'product_id', 'quantity', 'price', 'subtotal']
+        extra_kwargs = {
+            'quantity': {'help_text': 'Units purchased'},
+            'price': {'help_text': 'Unit price at time of order'},
+        }
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'Customer Example',
+            value={
+                'id': 7,
+                'name': 'John Doe',
+                'email': 'john@example.com',
+                'phone': '+1 555-1234',
+                'address': '1 Market St',
+                'city': 'San Francisco',
+                'state': 'CA',
+                'postal_code': '94105',
+                'country': 'USA',
+                'created_at': '2025-01-01T12:00:00Z',
+                'updated_at': '2025-01-05T12:00:00Z'
+            }
+        )
+    ]
+)
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
@@ -49,8 +139,38 @@ class CustomerSerializer(serializers.ModelSerializer):
             'city', 'state', 'postal_code', 'country',
             'created_at', 'updated_at'
         ]
+        extra_kwargs = {
+            'name': {'help_text': 'Full name of customer'},
+            'email': {'help_text': 'Contact email'},
+            'phone': {'help_text': 'Phone number'},
+            'address': {'help_text': 'Street address'},
+            'postal_code': {'help_text': 'ZIP/Postal code'},
+            'country': {'help_text': 'Country/Region'},
+        }
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'Order Example',
+            value={
+                'id': 5001,
+                'order_number': 'TS-2025-00001',
+                'customer': {'id': 7, 'name': 'John Doe', 'email': 'john@example.com'},
+                'status': 'processing',
+                'total_amount': '3998.00',
+                'shipping_address': '1 Market St',
+                'shipping_city': 'San Francisco',
+                'shipping_state': 'CA',
+                'shipping_postal_code': '94105',
+                'shipping_country': 'USA',
+                'order_date': '2025-01-01T12:00:00Z',
+                'updated_at': '2025-01-05T12:00:00Z',
+                'items': []
+            }
+        )
+    ]
+)
 class OrderSerializer(serializers.ModelSerializer):
     customer = CustomerSerializer(read_only=True)
     items = OrderItemSerializer(many=True, read_only=True)
@@ -67,6 +187,10 @@ class OrderSerializer(serializers.ModelSerializer):
             'items'
         ]
         read_only_fields = ['order_number', 'order_date', 'updated_at', 'total_amount']
+        extra_kwargs = {
+            'status': {'help_text': "Order status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'"},
+            'shipping_address': {'help_text': 'Recipient address'},
+        }
 
 
 class CartItemSerializer(serializers.Serializer):

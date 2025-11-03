@@ -12,8 +12,70 @@ from django.core.exceptions import ValidationError
 from .serializers import CustomerSerializer
 from .models import Customer
 from .utils import assign_welcome_promo_and_email, claim_unused_promos
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'username': {
+                    'type': 'string',
+                    'description': 'Username for the new account',
+                    'example': 'johndoe'
+                },
+                'password': {
+                    'type': 'string',
+                    'format': 'password',
+                    'description': 'Password for the new account',
+                    'example': 'SecurePass123!'
+                },
+                'email': {
+                    'type': 'string',
+                    'format': 'email',
+                    'description': 'Email address (optional)',
+                    'example': 'john@example.com'
+                }
+            },
+            'required': ['username', 'password']
+        }
+    },
+    responses={
+        201: {
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string', 'example': 'Registered successfully'},
+                'user': {
+                    'type': 'object',
+                    'properties': {
+                        'id': {'type': 'integer', 'example': 1},
+                        'username': {'type': 'string', 'example': 'johndoe'},
+                        'email': {'type': 'string', 'example': 'john@example.com'}
+                    }
+                }
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string', 'example': 'username and password are required'}
+            }
+        }
+    },
+    examples=[
+        OpenApiExample(
+            'Register User',
+            value={
+                'username': 'johndoe',
+                'password': 'SecurePass123!',
+                'email': 'john@example.com'
+            },
+            request_only=True
+        ),
+    ]
+)
 @api_view(['POST'])
 @permission_classes([ApiKeyPermission, AllowAny])
 @throttle_classes([ScopedRateThrottle])
@@ -73,6 +135,43 @@ def register_api(request):
 register_api.throttle_scope = 'auth'
 
 
+@extend_schema(
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'id': {'type': 'integer', 'example': 1},
+                'username': {'type': 'string', 'example': 'johndoe'},
+                'email': {'type': 'string', 'example': 'john@example.com'},
+                'first_name': {'type': 'string', 'example': 'John'},
+                'last_name': {'type': 'string', 'example': 'Doe'},
+                'customer': {
+                    'type': 'object',
+                    'nullable': True,
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'name': {'type': 'string'},
+                        'email': {'type': 'string'},
+                        'phone': {'type': 'string'},
+                        'address': {'type': 'string'},
+                        'city': {'type': 'string'},
+                        'state': {'type': 'string'},
+                        'postal_code': {'type': 'string'},
+                        'country': {'type': 'string'}
+                    }
+                }
+            }
+        },
+        401: {
+            'type': 'object',
+            'properties': {
+                'detail': {'type': 'string', 'example': 'Authentication credentials were not provided.'}
+            }
+        }
+    },
+    summary='Get current user profile',
+    description='Returns the authenticated user\'s profile information including linked customer details.'
+)
 @api_view(['GET'])
 @authentication_classes([JWTAuthentication, SessionAuthentication])
 @permission_classes([ApiKeyPermission, IsAuthenticated])
